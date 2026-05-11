@@ -4,6 +4,7 @@ from data.dataset import load_simcity_temporal_data
 from models.tgn_core import SimCityTGN
 from models.virality_head import PlatformPooling, ViralityHead
 from models.loss import SimCityLoss
+from models.hawkes import StreamingHawkesLoss
 from torch_geometric.loader import TemporalDataLoader
 from torch_geometric.nn.models.tgn import LastNeighborLoader
 
@@ -24,9 +25,11 @@ tgn = SimCityTGN(num_nodes, raw_msg_dim, embedding_dim, time_dim, embedding_dim)
 pooling = PlatformPooling(embedding_dim, num_platforms).to(device)
 virality_head = ViralityHead(embedding_dim, num_platforms).to(device)
 loss_module = SimCityLoss().to(device)
+hawkes_loss_fn = StreamingHawkesLoss(num_platforms=num_platforms).to(device)
 
 tgn.reset_memory()
 neighbor_loader.reset_state()
+hawkes_loss_fn.reset_state()
 
 batch = next(iter(train_loader))
 batch = batch.to(device)
@@ -79,11 +82,18 @@ print(f"[POOLING] h_P shape: {h_P.shape}")
 assert h_P.shape == (num_platforms, embedding_dim), \
     f"Expected ({num_platforms}, {embedding_dim}), got {h_P.shape}"
 
-beta, alpha, gamma, pred_virality = virality_head(h_src, h_dst_pos, h_P)
+gdelt_volume = msg[:, -1]
+beta, mu, alpha, gamma, pred_virality = virality_head(
+    h_src, h_dst_pos, h_P, gdelt_volume
+)
 print(f"[VIRALITY HEAD] beta shape: {beta.shape}")
+print(f"[VIRALITY HEAD] mu shape: {mu.shape}")
 print(f"[VIRALITY HEAD] alpha shape: {alpha.shape}")
 print(f"[VIRALITY HEAD] gamma shape: {gamma.shape}")
 print(f"[VIRALITY HEAD] pred_virality shape: {pred_virality.shape}")
+assert mu.shape == (src.size(0), num_platforms), \
+    f"Expected mu shape ({src.size(0)}, {num_platforms}), got {mu.shape}"
+assert (mu > 0).all(), "mu has non-positive values"
 assert alpha.shape[-2:] == (num_platforms, num_platforms), \
     f"alpha must be P×P, got {alpha.shape}"
 assert gamma.shape[-2:] == (num_platforms, num_platforms), \
@@ -93,8 +103,9 @@ assert (gamma > 0).all(), "gamma has non-positive values — epsilon missing"
 
 l_tgn = loss_module.compute_tgn_loss(h_src, h_dst_pos, h_dst_neg)
 l_virality = loss_module.compute_virality_loss(pred_virality, batch.y)
-l_hawkes = torch.tensor(0.0, device=device)
+l_hawkes = hawkes_loss_fn(t, platform_ids, mu, alpha, gamma)
 print(f"[LOSS] l_tgn: {l_tgn.item():.4f}")
+print(f"[LOSS] l_hawkes: {l_hawkes.item():.4f}")
 print(f"[LOSS] l_virality: {l_virality.item():.4f}")
 
 loss = loss_module(l_tgn, l_hawkes, l_virality)

@@ -50,6 +50,9 @@ class SimCityLoss(nn.Module):
 
     def forward(self, l_tgn, l_hawkes, l_virality):
         """
-        Combines the individual losses using flat weights.
+        Combines task losses using homoscedastic uncertainty weighting.
         """
-        return l_tgn + l_hawkes + l_virality
+        losses = torch.stack([l_tgn, l_hawkes, l_virality])
+        log_vars = self.log_vars.clamp(min=-6.0, max=6.0)
+        precision = torch.exp(-log_vars)
+        return (precision * losses + 0.5 * log_vars).sum()

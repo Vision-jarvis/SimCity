@@ -1,9 +1,10 @@
 import torch
 from data.dataset import load_simcity_temporal_data
-from torch_geometric.loader import TemporalDataLoader, NeighborLoader
+from torch_geometric.loader import TemporalDataLoader
 from models.tgn_core import SimCityTGN
 from models.virality_head import ViralityHead
 from models.loss import SimCityLoss
+from models.hawkes import StreamingHawkesLoss
 import numpy as np
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,6 +24,8 @@ virality_head = ViralityHead(embedding_dim=64, num_platforms=3).to(device)
 from torch_geometric.nn.models.tgn import LastNeighborLoader
 neighbor_loader = LastNeighborLoader(num_nodes, size=10, device=device)
 loss_module = SimCityLoss().to(device)
+hawkes_loss_fn = StreamingHawkesLoss(num_platforms=3).to(device)
+hawkes_loss_fn.reset_state()
 optimizer = torch.optim.Adam(list(tgn.parameters()) + list(pooling.parameters()) + list(virality_head.parameters()) + list(loss_module.parameters()), lr=1e-3)
 train_loader = TemporalDataLoader(train_data, batch_size=200, neg_sampling_ratio=0.0)
 batch = next(iter(train_loader)).to(device)
@@ -54,17 +57,24 @@ platform_ids = batch.platform
 influence_scores = h_src.norm(dim=-1).detach()
 h_P = pooling(h_src, platform_ids, influence_scores)
 
-beta, alpha, gamma, pred_virality = virality_head(h_src, h_dst_pos, h_P)
+gdelt_volume = msg[:, -1]
+beta, mu, alpha, gamma, pred_virality = virality_head(
+    h_src, h_dst_pos, h_P, gdelt_volume
+)
 
 l_tgn = loss_module.compute_tgn_loss(h_src, h_dst_pos, h_dst_neg)
+l_hawkes = hawkes_loss_fn(t, platform_ids, mu, alpha, gamma)
 l_virality = loss_module.compute_virality_loss(pred_virality, batch.y)
 
-precision = torch.exp(-loss_module.log_vars)
-loss = precision[0]*l_tgn + 0.5*loss_module.log_vars[0] + precision[2]*l_virality + 0.5*loss_module.log_vars[2]
+loss = loss_module(l_tgn, l_hawkes, l_virality)
 
 print(f"Check A - log_vars after init: {loss_module.log_vars.data}")
 print(f"Check A - precision weights: {torch.exp(-loss_module.log_vars).data}")
-print(f"Check A - l_tgn raw: {l_tgn.item():.4f}, l_virality raw: {l_virality.item():.4f}")
+print(
+    f"Check A - l_tgn raw: {l_tgn.item():.4f}, "
+    f"l_hawkes raw: {l_hawkes.item():.4f}, "
+    f"l_virality raw: {l_virality.item():.4f}"
+)
 
 loss.backward()
 
@@ -82,7 +92,7 @@ print("\n--- PHASE 2: CHECK B (Flat Equal Weights) ---")
 import types
 from evaluate import evaluate_model
 def flat_forward(self, l_tgn, l_hawkes, l_virality):
-    return l_tgn + l_virality
+    return l_tgn + l_hawkes + l_virality
 
 loss_module.forward = types.MethodType(flat_forward, loss_module)
 
@@ -90,6 +100,8 @@ for epoch in range(1, 6):
     tgn.train()
     virality_head.train()
     tgn.reset_memory()
+    neighbor_loader.reset_state()
+    hawkes_loss_fn.reset_state()
     total_loss = 0
     for batch in train_loader:
         batch = batch.to(device)
@@ -117,21 +129,28 @@ for epoch in range(1, 6):
         influence_scores = h_src.norm(dim=-1).detach()
         h_P = pooling(h_src, platform_ids, influence_scores)
         
-        beta, alpha, gamma, pred_virality = virality_head(h_src, h_dst_pos, h_P)
+        gdelt_volume = msg[:, -1]
+        beta, mu, alpha, gamma, pred_virality = virality_head(
+            h_src, h_dst_pos, h_P, gdelt_volume
+        )
         l_tgn = loss_module.compute_tgn_loss(h_src, h_dst_pos, h_dst_neg)
+        l_hawkes = hawkes_loss_fn(t, platform_ids, mu, alpha, gamma)
         l_virality = loss_module.compute_virality_loss(pred_virality, batch.y)
-        loss = loss_module(l_tgn, torch.tensor(0.0, device=device), l_virality)
+        loss = loss_module(l_tgn, l_hawkes, l_virality)
         
         loss.backward()
         optimizer.step()
         tgn.memory.detach()
         total_loss += loss.item()
-        tgn.memory.update_state(src, pos_dst, t, msg)
         
     print(f"Epoch {epoch} | Train Loss (Flat): {total_loss / len(train_loader):.4f}")
 
 tgn.reset_memory()
 neighbor_loader.reset_state()
+hawkes_loss_fn.reset_state()
 val_loader = TemporalDataLoader(val_data, batch_size=200, neg_sampling_ratio=0.0)
-eval_metrics = evaluate_model(tgn, pooling, virality_head, val_loader, neighbor_loader, num_nodes, 3, raw_msg_dim, device)
+eval_metrics = evaluate_model(
+    tgn, pooling, virality_head, val_loader, neighbor_loader,
+    num_nodes, 3, raw_msg_dim, device, hawkes_loss_fn
+)
 print(f"\nCheck B - Final Val MAE (Flat weights): {eval_metrics['virality_mae']:.4f}")

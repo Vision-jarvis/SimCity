@@ -8,6 +8,7 @@ from data.dataset import load_simcity_temporal_data
 from models.tgn_core import SimCityTGN
 from models.virality_head import PlatformPooling, ViralityHead
 from models.loss import SimCityLoss
+from models.hawkes import StreamingHawkesLoss
 from evaluate import evaluate_model
 
 def train():
@@ -39,10 +40,12 @@ def train():
     pooling = PlatformPooling(embedding_dim, num_platforms).to(device)
     virality_head = ViralityHead(embedding_dim, num_platforms).to(device)
     loss_module = SimCityLoss().to(device)
+    hawkes_loss_fn = StreamingHawkesLoss(num_platforms=num_platforms).to(device)
     
     valid_y = train_data.y[~torch.isnan(train_data.y)]
-    virality_head.target_mean.fill_(valid_y.mean().item())
-    virality_head.target_std.fill_(valid_y.std().item())
+    if valid_y.numel() > 0:
+        virality_head.target_mean.fill_(valid_y.mean().item())
+        virality_head.target_std.fill_(valid_y.std(unbiased=False).clamp_min(1e-6).item())
     
     optimizer = Adam([
         {'params': tgn.parameters()},
@@ -60,12 +63,14 @@ def train():
     # Before training begins — once
     tgn.reset_memory()
     neighbor_loader.reset_state()
+    hawkes_loss_fn.reset_state()
     
     for epoch in range(epochs):
         tgn.train()
         pooling.train()
         virality_head.train()
         loss_module.train()
+        hawkes_loss_fn.reset_state()
         
         total_loss = 0
         
@@ -110,24 +115,18 @@ def train():
             h_P = pooling(h_src, platform_ids, influence_scores)
             
             # 4. Virality Head Forward Pass
-            beta, alpha, gamma, pred_virality = virality_head(h_src, h_dst_pos, h_P)
+            gdelt_volume = msg[:, -1]
+            beta, mu, alpha, gamma, pred_virality = virality_head(
+                h_src, h_dst_pos, h_P, gdelt_volume
+            )
             
             # 5. Loss Calculation
             l_tgn = loss_module.compute_tgn_loss(h_src, h_dst_pos, h_dst_neg)
             l_virality = loss_module.compute_virality_loss(pred_virality, batch.y)
             
-            # Hawkes NLL (Zeroed out until real Hawkes kernel is implemented)
-            l_hawkes = torch.tensor(0.0, device=device, requires_grad=False)
+            l_hawkes = hawkes_loss_fn(t, platform_ids, mu, alpha, gamma)
             
-            # Combined Homoscedastic Loss
-            # Skip hawkes term if it's zero
-            if l_hawkes.requires_grad or l_hawkes.item() != 0.0:
-                loss = loss_module(l_tgn, l_hawkes, l_virality)
-            else:
-                loss = loss_module(l_tgn, torch.tensor(0.0, device=device), l_virality)
-                # Ensure the zero Hawkes loss doesn't distort Kendall sigma for the others
-                precision = torch.exp(-loss_module.log_vars)
-                loss = precision[0]*l_tgn + 0.5*loss_module.log_vars[0] + precision[2]*l_virality + 0.5*loss_module.log_vars[2]
+            loss = loss_module(l_tgn, l_hawkes, l_virality)
             
             loss.backward()
             optimizer.step()
@@ -144,11 +143,16 @@ def train():
         # Before validation — reset
         tgn.reset_memory()
         neighbor_loader.reset_state()
-        evaluate_model(tgn, pooling, virality_head, val_loader, neighbor_loader, num_nodes, num_platforms, raw_msg_dim, device)
+        hawkes_loss_fn.reset_state()
+        evaluate_model(
+            tgn, pooling, virality_head, val_loader, neighbor_loader,
+            num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn
+        )
         
         # Before resuming training next epoch — reset again to clean val contamination
         tgn.reset_memory()
         neighbor_loader.reset_state()
+        hawkes_loss_fn.reset_state()
 
     print("\n--- Running Sanity Checks ---")
     
@@ -172,7 +176,11 @@ def train():
     print("Running Shuffled Validation...")
     tgn.reset_memory()
     neighbor_loader.reset_state()
-    evaluate_model(tgn, pooling, virality_head, shuffled_val_loader, neighbor_loader, num_nodes, num_platforms, raw_msg_dim, device)
+    hawkes_loss_fn.reset_state()
+    evaluate_model(
+        tgn, pooling, virality_head, shuffled_val_loader, neighbor_loader,
+        num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn
+    )
     print("--- End of Sanity Checks ---")
 
 if __name__ == "__main__":

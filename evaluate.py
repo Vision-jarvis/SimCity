@@ -2,7 +2,18 @@ import torch
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-def evaluate_model(tgn, pooling, virality_head, loader, neighbor_loader, num_nodes, num_platforms, raw_msg_dim, device):
+def evaluate_model(
+    tgn,
+    pooling,
+    virality_head,
+    loader,
+    neighbor_loader,
+    num_nodes,
+    num_platforms,
+    raw_msg_dim,
+    device,
+    hawkes_loss_fn=None,
+):
     """
     Evaluates the SimCity model on a validation/test split.
     """
@@ -15,6 +26,9 @@ def evaluate_model(tgn, pooling, virality_head, loader, neighbor_loader, num_nod
     
     all_preds = []
     all_trues = []
+    hawkes_losses = []
+    if hawkes_loss_fn is not None and hasattr(hawkes_loss_fn, "reset_state"):
+        hawkes_loss_fn.reset_state()
     
     with torch.no_grad():
         for batch in loader:
@@ -41,7 +55,15 @@ def evaluate_model(tgn, pooling, virality_head, loader, neighbor_loader, num_nod
             influence_scores = h_src.norm(dim=-1).detach()
             h_P = pooling(h_src, platform_ids, influence_scores)
             
-            beta, alpha, gamma, pred_virality = virality_head(h_src, h_dst_pos, h_P)
+            gdelt_volume = msg[:, -1]
+            beta, mu, alpha, gamma, pred_virality = virality_head(
+                h_src, h_dst_pos, h_P, gdelt_volume
+            )
+
+            if hawkes_loss_fn is not None:
+                hawkes_losses.append(
+                    hawkes_loss_fn(t, platform_ids, mu, alpha, gamma).detach().cpu().item()
+                )
             
             # Mask NaNs for metrics
             mask = ~torch.isnan(batch.y)
@@ -49,14 +71,20 @@ def evaluate_model(tgn, pooling, virality_head, loader, neighbor_loader, num_nod
                 all_preds.append(pred_virality[mask].cpu().numpy())
                 all_trues.append(batch.y[mask].cpu().numpy())
                 
-    mae, rmse = None, None
+    metrics = {"virality_mae": None, "virality_rmse": None, "hawkes_nll": None}
     if len(all_preds) > 0:
         preds = np.concatenate(all_preds)
         trues = np.concatenate(all_trues)
         mae = mean_absolute_error(trues, preds)
         rmse = np.sqrt(mean_squared_error(trues, preds))
-        print(f"Evaluation -> Virality MAE: {mae:.4f} | RMSE: {rmse:.4f}")
+        metrics["virality_mae"] = mae
+        metrics["virality_rmse"] = rmse
+        msg = f"Evaluation -> Virality MAE: {mae:.4f} | RMSE: {rmse:.4f}"
+        if hawkes_losses:
+            metrics["hawkes_nll"] = float(np.mean(hawkes_losses))
+            msg += f" | Hawkes NLL: {metrics['hawkes_nll']:.4f}"
+        print(msg)
     else:
         print("Evaluation -> No valid virality targets found.")
         
-    return mae, rmse
+    return metrics
