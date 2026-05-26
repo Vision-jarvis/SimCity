@@ -12,8 +12,8 @@ class GraphAttentionEmbedding(nn.Module):
         super().__init__()
         self.time_enc = time_enc
         edge_dim = msg_dim + time_enc.out_channels
-        self.conv = TransformerConv(in_channels, out_channels // 2, heads=2,
-                                    dropout=0.1, edge_dim=edge_dim)
+        self.conv = TransformerConv(in_channels, out_channels // 4, heads=4,
+                                    dropout=0.2, edge_dim=edge_dim)
 
     def forward(self, x, last_update, edge_index, msg):
         rel_t = last_update[edge_index[0]] - last_update[edge_index[1]]
@@ -52,7 +52,7 @@ class SimCityTGN(torch.nn.Module):
         self.memory.reset_state()
         
         self.gat_embedding = GraphAttentionEmbedding(
-            in_channels=memory_dim,
+            in_channels=memory_dim + 1,
             out_channels=embedding_dim,
             msg_dim=raw_msg_dim,
             time_enc=self.memory.time_enc,
@@ -60,14 +60,14 @@ class SimCityTGN(torch.nn.Module):
         
         # Point-wise MLP for negative samples (memory only, no neighborhood)
         self.embedding_mlp = nn.Sequential(
-            nn.Linear(memory_dim, embedding_dim),
+            nn.Linear(memory_dim + 1, embedding_dim),
             nn.ReLU(),
             nn.Linear(embedding_dim, embedding_dim)
         )
         
         self._memory_was_reset = True
 
-    def forward(self, n_id, edge_index, edge_attr, src, dst, t, msg, require_reset_check=False):
+    def forward(self, n_id, edge_index, edge_attr, src, dst, t, msg, rad, require_reset_check=False):
         """
         Updates memory and calculates the temporal node embeddings.
         """
@@ -81,8 +81,12 @@ class SimCityTGN(torch.nn.Module):
         # Fetch pre-update memory for all nodes in computational graph
         z, last_update = self.memory(n_id)
         
+        # Concatenate behavioral radicalization scalar with structural memory
+        # rad is expected to be shape (num_nodes, 1)
+        z_with_rad = torch.cat([z, rad[n_id]], dim=-1)
+        
         # Compute embeddings via temporal attention over neighborhood
-        h = self.gat_embedding(z, last_update, edge_index, edge_attr)
+        h = self.gat_embedding(z_with_rad, last_update, edge_index, edge_attr)
         
         # Update memory with the new batch events
         self.memory.update_state(src, dst, t, msg)

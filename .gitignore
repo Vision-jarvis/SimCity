@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+venv/
+.env
+.DS_Store
+simulation_cache/
+
+# Node
+node_modules/
+.next/
+*.log

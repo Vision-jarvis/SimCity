@@ -14,7 +14,8 @@ def load_simcity_temporal_data(pkl_path, base_msg_dim=16):
     t   = torch.tensor(df['t'].values,   dtype=torch.float)
 
     # Base message features
-    msg_base = torch.tensor(df['msg'].tolist(), dtype=torch.float)
+    import numpy as np
+    msg_base = torch.tensor(np.array(df['msg'].tolist()), dtype=torch.float)
     assert msg_base.dim() == 2, \
         f"msg must be 2D, got {msg_base.shape}. Check for ragged rows."
 

@@ -57,8 +57,33 @@ def generate_synthetic_multiplex_data(
     narrative_weights = np.random.pareto(a=1.5, size=num_narratives) + 1
     narrative_probs = narrative_weights / narrative_weights.sum()
 
-    src_ids = np.random.choice(num_users, size=num_events, p=user_probs)
-    dst_ids = np.random.choice(num_narratives, size=num_events, p=narrative_probs)
+    # Assign users and narratives to 5 distinct communities
+    num_communities = 5
+    user_communities = np.random.randint(0, num_communities, size=num_users)
+    narrative_communities = np.random.randint(0, num_communities, size=num_narratives)
+    
+    src_ids = np.zeros(num_events, dtype=int)
+    dst_ids = np.zeros(num_events, dtype=int)
+    
+    # Generate edges with 90% homophily (same community)
+    for i in range(num_events):
+        if np.random.rand() < 0.90:
+            # Pick a community based on uniform choice, then pick user/narrative in it
+            c = np.random.randint(0, num_communities)
+            u_candidates = np.where(user_communities == c)[0]
+            n_candidates = np.where(narrative_communities == c)[0]
+        else:
+            # Cross-community (random)
+            u_candidates = np.arange(num_users)
+            n_candidates = np.arange(num_narratives)
+            
+        # Use Pareto weights within candidates
+        u_w = user_weights[u_candidates]
+        n_w = narrative_weights[n_candidates]
+        
+        src_ids[i] = np.random.choice(u_candidates, p=u_w/u_w.sum())
+        dst_ids[i] = np.random.choice(n_candidates, p=n_w/n_w.sum())
+        
     dst_ids += num_users
 
     platforms = np.random.choice(
@@ -102,9 +127,15 @@ def generate_synthetic_multiplex_data(
             delay = np.random.exponential(scale=3600)
             new_t = row['t'] + delay
             if new_t < total_seconds:
-                narrative_idx = int(row['dst']) - num_users
-                cascade_rows.append({
-                    'src': np.random.choice(num_users, p=user_probs),
+                    # Ensure cascade preserves the same dst narrative
+                    # To simulate real cascades, pick a user from the SAME community as the narrative
+                    n_c = narrative_communities[narrative_idx]
+                    u_candidates = np.where(user_communities == n_c)[0]
+                    u_w = user_weights[u_candidates]
+                    cascade_src = np.random.choice(u_candidates, p=u_w/u_w.sum())
+                    
+                    cascade_rows.append({
+                        'src': cascade_src,
                     'dst': row['dst'],
                     't': new_t,
                     'platform': 1,

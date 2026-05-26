@@ -4,3 +4,9 @@ scikit-learn
 torch
 torch-geometric
 pytest
+confluent-kafka
+praw
+python-dotenv
+requests
+gdelt
+neo4j

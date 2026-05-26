@@ -6,6 +6,9 @@ def evaluate_model(
     tgn,
     pooling,
     virality_head,
+    deffuant,
+    influence_scorer,
+    hmf_bridge,
     loader,
     neighbor_loader,
     num_nodes,
@@ -20,6 +23,9 @@ def evaluate_model(
     tgn.eval()
     pooling.eval()
     virality_head.eval()
+    deffuant.eval()
+    influence_scorer.eval()
+    hmf_bridge.eval()
     
     # STRICT GUARD: Enforce memory reset at validation start
     require_reset_check = True
@@ -29,6 +35,12 @@ def evaluate_model(
     hawkes_losses = []
     if hawkes_loss_fn is not None and hasattr(hawkes_loss_fn, "reset_state"):
         hawkes_loss_fn.reset_state()
+    influence_scorer.reset_state()
+    
+    # Deffuant state
+    node_opinions = torch.rand(num_nodes, device=device)
+    node_exposed = torch.zeros(num_nodes, dtype=torch.long, device=device)
+    node_rejected = torch.zeros(num_nodes, dtype=torch.long, device=device)
     
     with torch.no_grad():
         for batch in loader:
@@ -42,8 +54,34 @@ def evaluate_model(
             if edge_attr is None:
                 edge_attr = torch.zeros((edge_index.size(1), raw_msg_dim), device=device)
             
+            # Behavioral Update (Deffuant)
+            # Mock content opinion using first feature of msg
+            x_c = msg[:, 0]
+            
+            # Since Deffuant updates continuous state over dt, we pass the time since start of epoch or dt
+            dt = torch.ones_like(src, dtype=torch.float32)
+            
+            x_v_src = node_opinions[src]
+            
+            x_v_new, rejected, rad = deffuant(
+                x_v_src, x_c, dt, 
+                influence_scorer.temporal_degree[src].long(),
+                (influence_scorer.temporal_degree[src] * 0.5).long(), # Mock cross-community
+                node_exposed[src],
+                node_rejected[src]
+            )
+            
+            # Update state
+            node_opinions[src] = x_v_new
+            node_exposed[src] += 1
+            node_rejected[src] += rejected.long()
+            
+            # Full rad vector for TGN forward
+            full_rad = torch.zeros(num_nodes, 1, device=device)
+            full_rad[src, 0] = rad
+            
             # The first batch in validation checks the reset flag.
-            h = tgn(n_id, edge_index, edge_attr, src, pos_dst, t, msg, require_reset_check=require_reset_check)
+            h = tgn(n_id, edge_index, edge_attr, src, pos_dst, t, msg, full_rad, require_reset_check=require_reset_check)
             require_reset_check = False # Pass allowed after first check
             
             assoc = torch.empty(num_nodes, dtype=torch.long, device=device)
@@ -52,8 +90,13 @@ def evaluate_model(
             h_dst_pos = h[assoc[pos_dst]]
             
             platform_ids = batch.platform
-            influence_scores = h_src.norm(dim=-1).detach()
-            h_P = pooling(h_src, platform_ids, influence_scores)
+            
+            # Dynamic Influence Score
+            inf_src, _ = influence_scorer(src, pos_dst, t)
+            h_P = pooling(h_src, platform_ids, inf_src.detach())
+            
+            # Update HMF Bridge
+            hmf_bridge.update_degree_distribution(influence_scorer.temporal_degree[src], influence_scorer.temporal_degree[pos_dst])
             
             gdelt_volume = msg[:, -1]
             beta, mu, alpha, gamma, pred_virality = virality_head(
