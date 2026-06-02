@@ -1,0 +1,24 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API Docker image
+        run: docker build -t simcity-api:${{ github.sha }} .
+
+      - name: Build Frontend Docker image
+        run: docker build -t simcity-frontend:${{ github.sha }} ./frontend
+
+      - name: Run smoke test
+        run: |
+          docker-compose -f docker-compose.prod.yml up -d
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+          docker-compose -f docker-compose.prod.yml down

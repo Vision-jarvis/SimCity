@@ -1,0 +1,27 @@
+name: Lint
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: |
+          pip install ruff mypy
+
+      - name: Run Ruff
+        run: ruff check . --output-format=github
+
+      - name: Run MyPy
+        run: mypy . --ignore-missing-imports --no-error-summary || true

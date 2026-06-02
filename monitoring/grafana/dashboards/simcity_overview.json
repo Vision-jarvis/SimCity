@@ -1,0 +1,56 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "title": "API Request Rate",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(http_requests_total[5m])", "legendFormat": "{{method}} {{status}}" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Active Simulations",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_active_simulations", "legendFormat": "Active" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Kafka Consumer Lag",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "kafka_consumer_group_lag", "legendFormat": "{{topic}}" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Neo4j Node Count",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "neo4j_node_count", "legendFormat": "Nodes" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 4 }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "process_resident_memory_bytes / 1e6", "legendFormat": "MB" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+    }
+  ],
+  "title": "SimCity Overview",
+  "uid": "simcity-overview",
+  "version": 1
+}

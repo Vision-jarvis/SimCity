@@ -1,12 +1,58 @@
+# === Core ===
 numpy
 pandas
 scikit-learn
-torch
-torch-geometric
-pytest
-confluent-kafka
-praw
 python-dotenv
 requests
-gdelt
+httpx
+
+# === Deep Learning ===
+torch
+torch-geometric
+
+# === NLP ===
+transformers
+sentence-transformers
+bertopic
+detoxify
+spacy
+
+# === Streaming & Messaging ===
+confluent-kafka
+
+# === Databases ===
 neo4j
+chromadb
+
+# === Graph Analysis ===
+networkx
+python-louvain
+
+# === Data Ingestion ===
+praw
+gdelt
+feedparser
+google-api-python-client
+
+# === API ===
+fastapi
+uvicorn[standard]
+strawberry-graphql[fastapi]
+websockets
+
+# === ML Ops ===
+mlflow
+
+# === Forecasting ===
+prophet
+
+# === Simulation ===
+langgraph
+langchain-core
+
+# === Testing ===
+pytest
+pytest-asyncio
+
+# === Utilities ===
+pydantic
