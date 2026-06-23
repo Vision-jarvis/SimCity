@@ -56,6 +56,41 @@ Major platform goes offline, traffic migrates.
 - Low λ (30) = reduced cascading
 - Low φ (0.03) = minimal amplification
 
+## Counterfactual Intervention Simulator (digital-twin "what-if")
+
+The intervention simulator (`simulation/intervention.py`) runs a **baseline**
+trajectory and a **counterfactual** trajectory that differ only by an applied
+intervention, then reports the measured deltas. This is the core digital-twin
+question: *"what would happen if we acted?"*
+
+### Intervention types
+
+| Type | Effect on dynamics |
+|------|--------------------|
+| `fact_check` | ↓ transmission (β), ↓ algorithmic boost of Z (θ) |
+| `counter_narrative` | ↓ β, pushes content opinion toward neutral |
+| `deplatform_bots` | ↓ Hawkes λ surge (→ ↓ zeta resurgence), ↓ θ |
+| `rate_limit` | caps λ at a ceiling (slows cascade growth) |
+| `influencer_amplify` | ↑ β and re-injects a λ spike (adversarial what-if) |
+
+### Reported metrics & deltas
+`peak_I`, `peak_I_step`, `total_reach` (N − final S), `final_Z` (persistent
+misinformation), `final_D` (debunked/archived), `auc_I` (cumulative engagement),
+plus absolute `deltas` and `pct_change` vs. baseline.
+
+### Via API
+```bash
+curl -X POST http://localhost:8000/simulate/intervention \
+  -H "Content-Type: application/json" \
+  -d '{
+        "scenario": {"N": 100000, "steps": 40},
+        "interventions": [{"type": "fact_check", "start_step": 10, "magnitude": 0.7}]
+      }'
+```
+
+Runs are deterministically seeded so baseline and treatment differ *only* by the
+intervention, making the deltas causally interpretable.
+
 ## Agent Simulation
 
 The LangGraph runtime orchestrates agent-based messaging:
@@ -66,3 +101,4 @@ The LangGraph runtime orchestrates agent-based messaging:
 | **BotAgent** | Automated amplification, repetitive sharing |
 | **SkepticAgent** | Fact-checking, counter-narratives |
 | **CommunityAgent** | Moderate discussion, consensus-building |
+| **NewsAgent** | Measured, source-citing reporting |

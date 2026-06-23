@@ -1,4 +1,5 @@
-.PHONY: install dev test lint api frontend docker-up docker-down seed clean
+.PHONY: install dev test test-all lint api frontend docker-up docker-down seed clean \
+	train-pipeline retrain loadtest k8s-deploy k8s-delete
 
 # ============ Setup ============
 install:
@@ -51,6 +52,13 @@ hawkes-baseline:
 cascade-monitor:
 	python run_cascade_monitor.py --data data/synthetic_events.pkl --epochs 4
 
+# ============ MLOps ============
+train-pipeline:
+	python run_training_pipeline.py train --demo
+
+retrain:
+	python run_training_pipeline.py schedule --observed-mae 0.55 --demo
+
 # ============ Graph ============
 graph-builder:
 	python run_graph_builder.py
@@ -58,6 +66,9 @@ graph-builder:
 # ============ Testing ============
 test:
 	python -m pytest tests/ -q
+
+test-all:
+	python -m pytest tests/ api/tests/ graph/tests/ ingestion/tests/ nlp/tests/ -q
 
 test-cov:
 	python -m pytest tests/ --cov=. --cov-report=html
@@ -72,6 +83,16 @@ smoke:
 
 benchmark:
 	python scripts/benchmark.py
+
+loadtest:
+	locust -f scripts/locustfile.py --host http://localhost:8000
+
+# ============ Kubernetes (k3s / OCI) ============
+k8s-deploy:
+	kubectl apply -k infra/k8s
+
+k8s-delete:
+	kubectl delete -k infra/k8s
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import List
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 class BaseAgent:
@@ -33,7 +33,6 @@ class BaseAgent:
             return response
             
         # Stub logic if no LLM provided
-        last_msg = messages[-1].content.lower() if messages else ""
         if self.radicalization > 0.8:
             reply = f"[{self.name}] This is garbage. Fake news! Wake up!"
         elif self.opinion_state > 0.7:

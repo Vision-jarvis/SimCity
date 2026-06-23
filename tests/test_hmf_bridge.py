@@ -1,5 +1,4 @@
 import torch
-import pytest
 from models.hmf_bridge import DegreeCorrelatedHMF
 
 def test_hmf_bridge_degree_update():

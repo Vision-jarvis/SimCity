@@ -4,7 +4,7 @@ to normalized events before graph ingestion.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

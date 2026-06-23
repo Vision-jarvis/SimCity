@@ -2,7 +2,13 @@ from typing import Annotated, Sequence, TypedDict
 import operator
 from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph import StateGraph, END
-from simulation.agents.personas import InfluencerAgent, BotAgent, SkepticAgent, CommunityAgent
+from simulation.agents.personas import (
+    InfluencerAgent,
+    BotAgent,
+    SkepticAgent,
+    CommunityAgent,
+    NewsAgent,
+)
 
 # Define the state schema
 class AgentState(TypedDict):
@@ -20,7 +26,8 @@ class LangGraphRuntime:
             "influencer": InfluencerAgent(llm=self.llm),
             "bot": BotAgent(llm=self.llm),
             "skeptic": SkepticAgent(llm=self.llm),
-            "community": CommunityAgent(llm=self.llm)
+            "community": CommunityAgent(llm=self.llm),
+            "news": NewsAgent(llm=self.llm)
         }
         self.graph = self._build_graph()
 
@@ -43,7 +50,11 @@ class LangGraphRuntime:
         def community_node(state):
             msg = self.agents["community"].invoke(state["messages"])
             return {"messages": [msg]}
-            
+
+        def news_node(state):
+            msg = self.agents["news"].invoke(state["messages"])
+            return {"messages": [msg]}
+
         # The Platform Node acts as a broadcast / turn aggregator
         def platform_node(state):
             turn = state.get("current_turn", 0) + 1
@@ -55,12 +66,14 @@ class LangGraphRuntime:
         workflow.add_node("bot", bot_node)
         workflow.add_node("skeptic", skeptic_node)
         workflow.add_node("community", community_node)
+        workflow.add_node("news", news_node)
 
         # Build Broadcast Topology: Platform broadcasts to all agents
         workflow.add_edge("platform", "influencer")
         workflow.add_edge("platform", "bot")
         workflow.add_edge("platform", "skeptic")
         workflow.add_edge("platform", "community")
+        workflow.add_edge("platform", "news")
 
         # Agents send their responses back to the platform
         # We need a conditional edge from platform to determine if we continue or END
@@ -74,10 +87,13 @@ class LangGraphRuntime:
         workflow.add_edge("bot", "platform_eval")
         workflow.add_edge("skeptic", "platform_eval")
         workflow.add_edge("community", "platform_eval")
-        
-        # Evaluator node to check stopping condition
+        workflow.add_edge("news", "platform_eval")
+
+        # Evaluator node to check stopping condition.
+        # Must write to at least one state channel (LangGraph requirement),
+        # so we pass the turn counter through unchanged.
         def platform_eval(state):
-            return {}
+            return {"current_turn": state["current_turn"]}
             
         workflow.add_node("platform_eval", platform_eval)
         workflow.add_conditional_edges("platform_eval", should_continue, {END: END, "platform": "platform"})

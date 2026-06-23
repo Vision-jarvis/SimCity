@@ -6,8 +6,14 @@ import os
 import uuid
 import torch
 
-from api.schemas.simulation_schemas import ScenarioConfig, SimulationResult
+from api.schemas.simulation_schemas import (
+    ScenarioConfig,
+    SimulationResult,
+    InterventionRequest,
+    InterventionResult,
+)
 from simulation.engine import SimCityEngine
+from simulation.intervention import InterventionSimulator, Intervention
 from models.deffuant import SmoothDeffuant
 
 router = APIRouter(prefix="/simulate", tags=["simulation"])
@@ -69,6 +75,40 @@ async def run_simulation(config: ScenarioConfig):
 
         return result
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/intervention", response_model=InterventionResult)
+async def run_intervention(request: InterventionRequest):
+    """Counterfactual what-if: compare a baseline trajectory against one with
+    interventions applied, and return the measured deltas."""
+    try:
+        simulator = InterventionSimulator()
+        interventions = [
+            Intervention(
+                type=spec.type,
+                start_step=spec.start_step,
+                magnitude=spec.magnitude,
+                name=spec.name,
+            )
+            for spec in request.interventions
+        ]
+        report = simulator.compare(
+            params=request.scenario.model_dump(),
+            interventions=interventions,
+            include_history=request.include_history,
+        )
+
+        run_id = str(uuid.uuid4())
+        result = InterventionResult(run_id=run_id, **report.to_dict())
+
+        with open(os.path.join(CACHE_DIR, f"{run_id}.json"), "w") as f:
+            json.dump(result.model_dump(), f)
+
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

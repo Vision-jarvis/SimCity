@@ -1,7 +1,7 @@
 """Pydantic schemas for simulation API endpoints."""
 
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 class ScenarioConfig(BaseModel):
@@ -44,6 +44,30 @@ class SimulationResult(BaseModel):
     run_id: str
     scenario: ScenarioConfig
     results: List[Dict[str, Any]]
+
+
+class InterventionSpec(BaseModel):
+    type: str  # fact_check | counter_narrative | deplatform_bots | rate_limit | influencer_amplify
+    start_step: int = 0
+    magnitude: float = 0.5
+    name: str = ""
+
+
+class InterventionRequest(BaseModel):
+    scenario: ScenarioConfig = ScenarioConfig()
+    interventions: List[InterventionSpec] = []
+    include_history: bool = True
+
+
+class InterventionResult(BaseModel):
+    run_id: str
+    baseline_metrics: Dict[str, Any]
+    treatment_metrics: Dict[str, Any]
+    deltas: Dict[str, Any]
+    pct_change: Dict[str, Any]
+    interventions: List[Dict[str, Any]]
+    baseline_history: List[Dict[str, Any]] = []
+    treatment_history: List[Dict[str, Any]] = []
 
 
 class AgentMessage(BaseModel):

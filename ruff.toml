@@ -1,0 +1,22 @@
+# Ruff configuration for SimCity.
+# Tracks the project's intentional patterns so `ruff check .` is meaningful
+# (catches real issues) without flagging deliberate scientific/glue code.
+
+target-version = "py311"
+line-length = 100
+
+# Demo notebooks use convenience star-imports; the frontend is JS/TS.
+extend-exclude = ["notebooks", "frontend"]
+
+[lint]
+# E741: single-letter names like I, S, E, R, Z, D (SEIR-Z-D compartments) and
+#       l (intermediate tensors) are standard in this numerical code.
+ignore = ["E741"]
+
+[lint.per-file-ignores]
+# CLI entry points intentionally mutate sys.path / set up env before importing
+# project modules.
+"run_diagnostics.py" = ["E402"]
+"run_training_pipeline.py" = ["E402"]
+# Optional-dependency availability probes import inside guards.
+"nlp/stance_detector.py" = ["F401"]

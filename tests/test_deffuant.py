@@ -1,5 +1,4 @@
 import torch
-import pytest
 from models.deffuant import SmoothDeffuant
 
 def test_smooth_deffuant_radicalization():
@@ -60,5 +59,5 @@ def test_smooth_deffuant_forward():
     x_v_new, rejected, rad = model(x_v, x_c, dt, total_edges, cross_edges, num_exposed, num_rejected)
     
     assert torch.allclose(rad[0], torch.tensor(0.0))
-    assert rejected[0] == False
+    assert not rejected[0]
     assert x_v_new[0] > 0.0 # should move towards x_c

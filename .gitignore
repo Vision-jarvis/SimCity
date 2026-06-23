@@ -5,6 +5,12 @@ venv/
 .DS_Store
 simulation_cache/
 
+# MLOps / experiment tracking
+mlruns_local/
+mlruns/
+.locust_results/
+*.pt
+
 # Node
 node_modules/
 .next/

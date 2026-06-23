@@ -5,7 +5,6 @@ from models.tgn_core import SimCityTGN
 from models.virality_head import ViralityHead
 from models.loss import SimCityLoss
 from models.hawkes import StreamingHawkesLoss
-import numpy as np
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

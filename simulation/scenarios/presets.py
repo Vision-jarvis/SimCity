@@ -1,4 +1,3 @@
-import json
 from simulation.langgraph_runtime import LangGraphRuntime
 from simulation.engine import SimCityEngine
 
@@ -39,7 +38,7 @@ class ScenarioPresets:
             delta_D=0.005 # Almost never archived
         )
         
-        print(f"\n--- SEIR-Z-D Dynamics ---")
+        print("\n--- SEIR-Z-D Dynamics ---")
         print(f"Computed Hawkes injected_lambda from Agent interactions: {base_lambda}")
         
         history = engine.run_scenario(

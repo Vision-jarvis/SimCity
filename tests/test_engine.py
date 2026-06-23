@@ -1,4 +1,3 @@
-import pytest
 import torch
 from simulation.engine import SimCityEngine
 from models.deffuant import SmoothDeffuant

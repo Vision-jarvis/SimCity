@@ -2,7 +2,7 @@
 
 ## Overview
 
-SimCity ingests from 5 real-time internet data sources, each mapped to a platform ID.
+SimCity ingests from 7 real-time internet data sources, each mapped to a platform ID.
 
 | Platform | ID | API | Free Tier | Ingester |
 |----------|------|------|-----------|----------|
@@ -11,6 +11,8 @@ SimCity ingests from 5 real-time internet data sources, each mapped to a platfor
 | GDELT | 2 | GDELT Project | Yes (unlimited) | `ingestion/sources/gdelt_ingester.py` |
 | RSS | 3 | feedparser | Yes (N/A) | `ingestion/sources/rss_ingester.py` |
 | YouTube | 4 | Data API v3 | Yes (10k units/day) | `ingestion/sources/youtube_ingester.py` |
+| Wikipedia | 5 | Wikimedia API | Yes (unlimited, no key) | `ingestion/sources/wikipedia_ingester.py` |
+| Bluesky | 6 | AT Protocol AppView | Yes (no key; app password optional) | `ingestion/sources/bluesky_ingester.py` |
 
 ## Event Schema
 
@@ -51,3 +53,21 @@ All events are normalized to:
 - **Source**: YouTube Data API v3
 - **Fields**: title, description, view_count, like_count, channel
 - **Rate limit**: 10,000 quota units/day (search=100, details=1)
+
+## Wikipedia
+- **Source**: Wikimedia `recentchanges` API (live edit stream)
+- **Fields**: title, comment, user, size_delta, type (edit/new), pageid
+- **Rate limit**: None; no API key required
+- **Why**: edit-volume spikes are an early signal of collective attention on breaking topics
+- **Config**: `WIKIPEDIA_API_URL`
+
+## Bluesky (AT Protocol)
+- **Source**: public AppView — https://public.api.bsky.app
+- **Modes**:
+  - **Public (no key):** follows configured accounts via `app.bsky.feed.getAuthorFeed` (open, verified working keyless).
+  - **Authenticated (optional app password):** additionally runs `app.bsky.feed.searchPosts` for query discovery — *search requires auth on Bluesky*.
+- **Fields**: post text, author handle, like/repost/reply counts, post URI
+- **Cost**: $0. No key for the public path. App password (optional, higher limits + search): https://bsky.app/settings/app-passwords
+- **Config**: `BLUESKY_APPVIEW_URL`, `BLUESKY_PDS_URL`, `BLUESKY_ACTORS` (public),
+  `BLUESKY_QUERIES` (search), optional `BLUESKY_IDENTIFIER` / `BLUESKY_APP_PASSWORD`
+- **Why**: stable, key-optional social signal (the dependable free X-alternative)

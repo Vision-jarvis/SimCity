@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 from confluent_kafka import Consumer, KafkaError
 from graph.config import KAFKA_BROKER_URL, KAFKA_TOPIC
 from graph.neo4j_client import GraphClient

@@ -54,5 +54,8 @@ langchain-core
 pytest
 pytest-asyncio
 
+# === Load Testing / DevOps ===
+locust
+
 # === Utilities ===
 pydantic

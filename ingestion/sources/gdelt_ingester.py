@@ -88,7 +88,7 @@ class GDELTIngester(BaseIngester):
                     try:
                         dt = pd.to_datetime(str(row["DATEADDED"]), format='%Y%m%d%H%M%S')
                         timestamp = dt.timestamp()
-                    except:
+                    except Exception:
                         timestamp = time.time()
                         
                     # GDELT events don't have natural "content" like a post, so we build a summary

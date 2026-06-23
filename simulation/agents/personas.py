@@ -39,3 +39,13 @@ class CommunityAgent(BaseAgent):
             radicalization=0.7,
             llm=llm
         )
+
+class NewsAgent(BaseAgent):
+    def __init__(self, name="NewsOutlet", llm=None):
+        super().__init__(
+            name=name,
+            role="Mainstream news outlet. You report developments in a measured, neutral tone and cite sources.",
+            opinion_state=0.5,
+            radicalization=0.1,
+            llm=llm
+        )

@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 from torch.optim import AdamW
 from torch_geometric.loader import TemporalDataLoader
 from torch_geometric.nn.models.tgn import LastNeighborLoader
@@ -173,8 +172,9 @@ def train():
                 h_src, h_dst_pos, h_P, gdelt_volume
             )
             
-            # Calculate Macroscopic Beta (for logging/simulation)
-            beta_macro = hmf_bridge(beta, influence_scorer.temporal_degree[src])
+            # Exercise the HMF bridge forward pass (macroscopic beta is used by
+            # the simulation engine; not part of the training loss here).
+            hmf_bridge(beta, influence_scorer.temporal_degree[src])
             
             # 5. Loss Calculation
             l_tgn = loss_module.compute_tgn_loss(h_src, h_dst_pos, h_dst_neg)
@@ -216,8 +216,20 @@ def train():
         hawkes_loss_fn.reset_state()
         influence_scorer.reset_state()
 
+    # Final held-out test evaluation (chronologically latest split).
+    print("\n--- Final Test Set Evaluation ---")
+    tgn.reset_memory()
+    neighbor_loader.reset_state()
+    hawkes_loss_fn.reset_state()
+    influence_scorer.reset_state()
+    test_metrics = evaluate_model(
+        tgn, pooling, virality_head, deffuant, influence_scorer, hmf_bridge, test_loader, neighbor_loader,
+        num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn
+    )
+    print(f"Test metrics: {test_metrics}")
+
     print("\n--- Running Sanity Checks ---")
-    
+
     # 1. Naive mean baseline
     train_mean = train_data.y[~train_data.y.isnan()].mean().item()
     naive_preds = torch.full_like(val_data.y, train_mean)

@@ -18,6 +18,8 @@ PLATFORM_NAMES = {
     2: "gdelt",
     3: "rss",
     4: "youtube",
+    5: "wikipedia",
+    6: "bluesky",
 }
 
 

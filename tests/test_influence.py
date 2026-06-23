@@ -1,5 +1,4 @@
 import torch
-import pytest
 from models.influence import DynamicInfluenceScorer
 
 def test_influence_scorer_initialization():

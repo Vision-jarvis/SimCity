@@ -1,6 +1,5 @@
 """Tests for NLP pipeline modules."""
 
-import pytest
 
 
 class TestSentimentAnalyzer:

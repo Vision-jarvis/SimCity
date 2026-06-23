@@ -1,4 +1,3 @@
-import pytest
 import torch
 from simulation.seir_z_d import StochasticSEIRZD
 

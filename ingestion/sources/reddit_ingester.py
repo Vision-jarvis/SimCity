@@ -1,4 +1,3 @@
-import time
 import praw
 import logging
 from ingestion.sources.base import BaseIngester

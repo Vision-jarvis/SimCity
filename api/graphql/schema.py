@@ -2,7 +2,6 @@
 
 import strawberry
 from typing import List, Optional
-import time
 
 
 @strawberry.type

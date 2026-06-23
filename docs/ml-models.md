@@ -58,3 +58,38 @@
 ## Baselines
 - **Static MHP**: `baselines/mhp.py` — Multivariate Hawkes Process
 - **Static GNN**: `baselines/static_gnn.py` — Fixed-topology GCN baseline
+
+## MLOps (Training, Tracking & Retraining)
+
+The `ml/training/` and `ml/registry/` packages provide a production training
+lifecycle. All components degrade gracefully to a local JSON store when MLflow
+is not installed, so they run in CI and offline.
+
+### Experiment Tracking & Pipeline
+- **File**: `ml/training/pipeline.py`
+- **`ExperimentTracker`**: thin façade over MLflow (params/metrics/artifacts) with a local fallback.
+- **`TrainingPipeline`**: runs a tracked training pass, evaluates it, and **auto-promotes** the new version to `Production` only if it beats the incumbent on the primary metric.
+
+### Model Registry
+- **File**: `ml/registry/model_registry.py`
+- Register versions, transition stages (`Staging` → `Production` with auto-archive), and resolve the current production model. MLflow-backed or local JSON.
+
+### Drift Detection & Scheduled Retraining
+- **File**: `ml/training/scheduler.py`
+- **`RetrainingScheduler`**: triggers a retrain when the production model degrades beyond a relative threshold **or** exceeds a max staleness window.
+- Wired to **`.github/workflows/retrain.yml`** for nightly runs.
+
+### Evaluation
+- **File**: `ml/training/evaluate.py`
+- NumPy-only `regression_metrics` / `classification_metrics` and `ModelEvaluator` producing comparable `EvaluationReport`s.
+
+### CLI
+```bash
+# Run a tracked training pass and auto-promote if better (no PyG needed):
+python run_training_pipeline.py train --demo
+
+# Nightly drift check + conditional retrain:
+python run_training_pipeline.py schedule --observed-mae 0.55 --demo
+```
+
+See `docs/mlops.md` for the full lifecycle walkthrough.

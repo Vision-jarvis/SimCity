@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from api.schemas.graph_schemas import (
     NodeResponse, EdgeResponse, GraphStatsResponse,
-    CommunityResponse, InfluenceResponse, GraphQueryRequest,
+    CommunityResponse, InfluenceResponse,
 )
 from api.dependencies import get_graph_client
 

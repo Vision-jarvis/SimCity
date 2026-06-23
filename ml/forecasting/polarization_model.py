@@ -5,7 +5,7 @@ Based on the Deffuant bounded-confidence model extended with group dynamics.
 
 import logging
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)

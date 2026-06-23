@@ -5,8 +5,7 @@ Combines Temporal PageRank, engagement velocity, and degree centrality.
 
 import logging
 import time
-from typing import Dict, Optional, Tuple
-import numpy as np
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

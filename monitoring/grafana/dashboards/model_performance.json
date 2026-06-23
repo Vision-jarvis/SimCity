@@ -1,0 +1,65 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Virality MAE (Production model)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_model_virality_mae", "legendFormat": "MAE" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Hawkes NLL",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_model_hawkes_nll", "legendFormat": "NLL" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "title": "Inference Latency (p95)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, rate(simcity_inference_latency_seconds_bucket[5m]))", "legendFormat": "p95" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Metric Drift vs Production Reference",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_model_drift_relative_change", "legendFormat": "rel. change" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 }
+    },
+    {
+      "title": "Days Since Last Retrain",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_model_staleness_days", "legendFormat": "days" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 }
+    },
+    {
+      "title": "Registered Model Versions",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "simcity_model_registered_versions", "legendFormat": "versions" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 }
+    }
+  ],
+  "title": "SimCity Model Performance",
+  "uid": "simcity-model-perf",
+  "version": 1
+}

@@ -4,7 +4,7 @@ on the SimCity knowledge graph.
 """
 
 import logging
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,13 @@
 """Tests for ingestion sources and processors."""
 
-import pytest
-import time
 
 
 class TestBaseIngester:
     def test_format_event(self):
         from ingestion.sources.base import BaseIngester
-        ingester = BaseIngester(producer=None)
-        event = ingester.format_event(
+        # format_event is a @staticmethod; call it directly since
+        # BaseIngester is abstract and cannot be instantiated.
+        event = BaseIngester.format_event(
             event_id="test_001",
             platform=0,
             timestamp=1700000000.0,
@@ -101,6 +100,94 @@ class TestNormalizer:
         event = {"id": "x", "platform": 0, "timestamp": 1700000000000}
         result = norm.normalize(event)
         assert result["timestamp"] == 1700000000.0
+
+
+class TestWikipediaIngester:
+    def test_parse_changes(self):
+        from ingestion.sources.wikipedia_ingester import WikipediaIngester
+        ing = WikipediaIngester(producer=None)
+        payload = {
+            "query": {
+                "recentchanges": [
+                    {
+                        "rcid": 101, "type": "edit", "title": "Climate change",
+                        "user": "EditorBot", "comment": "fix typo",
+                        "timestamp": "2024-01-02T03:04:05Z",
+                        "oldlen": 100, "newlen": 150, "pageid": 7,
+                    },
+                    {
+                        "rcid": 102, "type": "new", "title": "Breaking Event",
+                        "user": "Reporter", "comment": "created",
+                        "timestamp": "2024-01-02T03:05:05Z",
+                        "oldlen": 0, "newlen": 500, "pageid": 8,
+                    },
+                ]
+            }
+        }
+        events = ing._parse_changes(payload)
+        assert len(events) == 2
+        assert events[0]["platform"] == 5
+        assert events[0]["id"] == "wiki_101"
+        assert events[0]["metadata"]["size_delta"] == 50
+        assert "Climate change" in events[0]["content"]
+        # Cursor advanced -> re-parsing the same payload yields nothing new.
+        assert ing._parse_changes(payload) == []
+
+    def test_parse_empty(self):
+        from ingestion.sources.wikipedia_ingester import WikipediaIngester
+        ing = WikipediaIngester(producer=None)
+        assert ing._parse_changes(None) == []
+        assert ing._parse_changes({}) == []
+
+
+class TestBlueskyIngester:
+    def test_parse_author_feed(self):
+        """Public mode parses getAuthorFeed payloads (no key needed)."""
+        from ingestion.sources.bluesky_ingester import BlueskyIngester
+        ing = BlueskyIngester(producer=None)
+        payload = {
+            "feed": [
+                {"post": {
+                    "uri": "at://did:plc:abc/app.bsky.feed.post/xyz1",
+                    "author": {"handle": "nytimes.com"},
+                    "record": {"text": "breaking news about AI", "createdAt": "2024-01-02T03:04:05.000Z"},
+                    "likeCount": 5, "repostCount": 2, "replyCount": 1,
+                }},
+                {"post": {
+                    "uri": "at://did:plc:def/app.bsky.feed.post/xyz2",
+                    "author": {"handle": "bbc.com"},
+                    "record": {"text": "more breaking news", "createdAt": "2024-01-02T03:05:05.000Z"},
+                }},
+            ]
+        }
+        events = ing._parse_author_feed(payload, "nytimes.com")
+        assert len(events) == 2
+        assert events[0]["platform"] == 6
+        assert events[0]["id"] == "bsky_xyz1"
+        assert events[0]["author"] == "nytimes.com"
+        assert events[0]["metadata"]["like_count"] == 5
+        assert events[0]["metadata"]["source"] == "@nytimes.com"
+        # Same payload again -> deduped via uri.
+        assert ing._parse_author_feed(payload, "nytimes.com") == []
+
+    def test_parse_search_authenticated_shape(self):
+        from ingestion.sources.bluesky_ingester import BlueskyIngester
+        ing = BlueskyIngester(producer=None)
+        payload = {"posts": [{
+            "uri": "at://did:plc:abc/app.bsky.feed.post/s1",
+            "author": {"handle": "alice.bsky.social"},
+            "record": {"text": "misinfo claim", "createdAt": "2024-01-02T03:04:05.000Z"},
+        }]}
+        events = ing._parse_search(payload, "misinformation")
+        assert len(events) == 1
+        assert events[0]["metadata"]["source"] == "misinformation"
+
+    def test_parse_timestamp_and_empty(self):
+        from ingestion.sources.bluesky_ingester import BlueskyIngester
+        ing = BlueskyIngester(producer=None)
+        assert ing._parse_timestamp("2024-01-02T03:04:05.000Z") > 0
+        assert ing._parse_author_feed(None, "x") == []
+        assert ing._parse_search(None, "q") == []
 
 
 class TestEnricher:

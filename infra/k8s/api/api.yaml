@@ -1,0 +1,48 @@
+# SimCity FastAPI backend.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      containers:
+        - name: api
+          image: simcity-api  # tag set via kustomization images:
+          ports:
+            - containerPort: 8000
+          env:
+            - { name: NEO4J_URI, value: "bolt://neo4j:7687" }
+            - { name: NEO4J_USER, value: "neo4j" }
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: neo4j-auth, key: NEO4J_AUTH }
+            - { name: REDIS_URL, value: "redis://redis:6379" }
+            - { name: KAFKA_BROKER_URL, value: "kafka:9092" }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1", memory: "2Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector: { app: api }
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP

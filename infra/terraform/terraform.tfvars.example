@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars and fill in your OCI credentials.
+# All values come from your OCI tenancy (Always-Free eligible).
+
+tenancy_ocid     = "ocid1.tenancy.oc1..xxxx"
+user_ocid        = "ocid1.user.oc1..xxxx"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "us-ashburn-1"
+compartment_ocid = "ocid1.compartment.oc1..xxxx"
+ssh_public_key   = "ssh-rsa AAAA... you@host"
+
+# Always-Free A1 allowances (do not exceed to stay at $0):
+instance_ocpus     = 4
+instance_memory_gb = 24
+boot_volume_gb     = 100

@@ -28,6 +28,7 @@ jobs:
           pip install networkx python-louvain
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install fastapi uvicorn strawberry-graphql[fastapi]
+          pip install langgraph langchain-core
 
       - name: Run tests
         run: |
@@ -35,3 +36,4 @@ jobs:
           python -m pytest nlp/tests/ -q --tb=short
           python -m pytest ingestion/tests/ -q --tb=short
           python -m pytest graph/tests/ -q --tb=short
+          python -m pytest api/tests/ -q --tb=short

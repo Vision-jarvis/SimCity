@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 
 BASE_MSG_DIM = 128
 NUM_PLATFORMS = 3       # 0: Reddit, 1: Hacker News, 2: GDELT/News
@@ -51,11 +51,10 @@ def generate_synthetic_multiplex_data(
         np.random.randint(0, total_seconds, size=num_events)
     ).astype(float)
 
+    # Pareto popularity weights; per-candidate normalization happens in the
+    # edge-sampling loop below (global probabilities are not used directly).
     user_weights = np.random.pareto(a=2.0, size=num_users) + 1
-    user_probs = user_weights / user_weights.sum()
-
     narrative_weights = np.random.pareto(a=1.5, size=num_narratives) + 1
-    narrative_probs = narrative_weights / narrative_weights.sum()
 
     # Assign users and narratives to 5 distinct communities
     num_communities = 5

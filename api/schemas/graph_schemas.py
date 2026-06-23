@@ -1,7 +1,7 @@
 """Pydantic schemas for graph API endpoints."""
 
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 class NodeResponse(BaseModel):

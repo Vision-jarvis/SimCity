@@ -5,7 +5,7 @@ Combines statistical features with learned patterns from historical data.
 
 import logging
 import numpy as np
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)

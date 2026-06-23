@@ -4,7 +4,7 @@ Each type maps to a Neo4j label with specific properties.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict
 
 
 @dataclass

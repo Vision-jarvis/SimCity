@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: "◉" },
   { href: "/graph", label: "Graph", icon: "◎" },
   { href: "/simulate", label: "Simulate", icon: "⚡" },
+  { href: "/intervention", label: "Intervention", icon: "🛡" },
   { href: "/trends", label: "Trends", icon: "📈" },
   { href: "/narratives", label: "Narratives", icon: "📖" },
 ];
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#0a0a0a] text-white font-sans antialiased">
+      <body className="bg-[#0a0a0a] text-white font-sans antialiased" suppressHydrationWarning>
         <div className="flex h-screen">
           {/* Sidebar Navigation */}
           <nav className="w-16 bg-[#0f0f0f] border-r border-gray-800 flex flex-col items-center py-4 gap-2">

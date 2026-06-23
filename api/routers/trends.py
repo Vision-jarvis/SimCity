@@ -6,8 +6,9 @@ import time
 
 from api.schemas.trend_schemas import (
     TrendItem, TrendResponse, ForecastRequest, ForecastResponse,
-    ForecastPoint, NarrativeResponse,
+    ForecastPoint, NarrativeResponse, NarrativeTransferRequest, NarrativeTransfer,
 )
+from analysis_tools.narrative_tracker import NarrativeTracker
 
 router = APIRouter(prefix="/trends", tags=["trends"])
 
@@ -78,3 +79,16 @@ async def get_narratives(limit: int = 10):
         ),
     ]
     return mock_narratives[:limit]
+
+
+@router.post("/narrative-transfer", response_model=List[NarrativeTransfer])
+async def detect_narrative_transfer(request: NarrativeTransferRequest):
+    """Detect how narratives propagate across platforms (Reddit -> HN -> News).
+
+    Clusters the supplied multi-platform events into narratives and returns each
+    one's cross-platform transfer path, time lags, and content-mutation score.
+    """
+    tracker = NarrativeTracker(similarity_threshold=request.similarity_threshold)
+    events = [e.model_dump() for e in request.events]
+    clusters = tracker.detect_transfers(events) if request.transfers_only else tracker.detect(events)
+    return [NarrativeTransfer(**c.to_dict()) for c in clusters]

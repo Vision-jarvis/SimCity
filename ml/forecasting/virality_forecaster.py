@@ -6,7 +6,7 @@ engagement prediction at 6h/24h/72h horizons.
 
 import logging
 import numpy as np
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -88,11 +88,8 @@ class ViralityForecaster:
 
         # Compute rate features
         if len(t_hours) > 1:
-            dt = np.diff(t_hours)
-            inter_event_mean = dt.mean()
             velocity = len(event_history) / max(t_hours.max(), 1)
         else:
-            inter_event_mean = 1.0
             velocity = 1.0
 
         # Generate predictions
