@@ -16,9 +16,19 @@ jobs:
       - name: Build Frontend Docker image
         run: docker build -t simcity-frontend:${{ github.sha }} ./frontend
 
-      - name: Run smoke test
+      - name: Smoke test API image
         run: |
-          docker-compose -f docker-compose.prod.yml up -d
-          sleep 10
-          curl -f http://localhost:8000/health || exit 1
-          docker-compose -f docker-compose.prod.yml down
+          docker run -d --name simcity-api -p 8000:8000 simcity-api:${{ github.sha }}
+          # Poll /health with retries — the API gracefully degrades without
+          # Kafka/Neo4j/Redis, so it should report healthy on its own.
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/health; then
+              echo "API healthy"; exit 0
+            fi
+            echo "waiting for API to boot... ($i/30)"; sleep 3
+          done
+          echo "API did not become healthy:"; docker logs simcity-api; exit 1
+
+      - name: Teardown
+        if: always()
+        run: docker rm -f simcity-api || true

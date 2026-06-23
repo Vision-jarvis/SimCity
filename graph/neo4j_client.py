@@ -1,5 +1,13 @@
 import logging
-from neo4j import GraphDatabase
+
+# The neo4j driver is optional: when it's not installed the client degrades to
+# offline/mock mode (driver=None), matching the documented graceful-degradation
+# design and keeping the API importable in minimal environments (e.g. CI).
+try:
+    from neo4j import GraphDatabase
+except ImportError:
+    GraphDatabase = None
+
 from graph.config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 
 logger = logging.getLogger(__name__)
@@ -14,6 +22,8 @@ class GraphClient:
         self.uri = uri
         self.user = user
         try:
+            if GraphDatabase is None:
+                raise ImportError("neo4j driver not installed")
             self.driver = GraphDatabase.driver(uri, auth=(user, password))
             # Verify connectivity
             self.driver.verify_connectivity()

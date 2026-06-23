@@ -15,7 +15,7 @@ cp .env.example .env
 # Edit .env with your API keys
 
 # 2. Start infrastructure
-docker-compose up -d
+docker compose up -d
 
 # 3. Install Python dependencies
 python -m venv .venv
@@ -38,7 +38,7 @@ npm run dev
 
 ### Docker Compose
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 This starts:

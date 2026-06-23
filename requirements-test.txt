@@ -1,0 +1,32 @@
+# Test / CI dependencies — the single source of truth for the test environment.
+#
+# This is the exact subset of requirements.txt needed to run the full test
+# suite (tests/, api/tests/, graph/tests/, ingestion/tests/, nlp/tests/).
+# Heavy / optional ML and infra deps (transformers, sentence-transformers,
+# bertopic, detoxify, spacy, torch-geometric, prophet, mlflow, chromadb,
+# confluent-kafka, neo4j, praw, gdelt, ...) are intentionally EXCLUDED — the
+# code degrades gracefully without them, and installing them in CI is slow
+# and fragile. If a test starts importing a new dep, add it here.
+#
+# torch is installed separately in CI from the CPU index to stay small/CUDA-free.
+
+pytest
+pytest-asyncio
+
+numpy>=1.26,<2
+pandas
+scikit-learn
+pydantic
+requests
+httpx
+python-dotenv
+feedparser
+networkx
+python-louvain
+torch
+
+fastapi
+uvicorn[standard]
+strawberry-graphql[fastapi]
+langgraph
+langchain-core

@@ -23,12 +23,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-asyncio
-          pip install numpy pandas scikit-learn pydantic requests httpx
-          pip install networkx python-louvain
+          # CPU-only torch keeps the install small and CUDA-free.
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install fastapi uvicorn strawberry-graphql[fastapi]
-          pip install langgraph langchain-core
+          # Single source of truth for the test environment (see requirements-test.txt).
+          pip install -r requirements-test.txt
 
       - name: Run tests
         run: |

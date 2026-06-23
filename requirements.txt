@@ -1,5 +1,7 @@
 # === Core ===
-numpy
+# Pinned <2: matches the committed synthetic_events.pkl and avoids NumPy 2.0
+# API removals (e.g. np.trapz). torch 2.3 and the rest are compatible.
+numpy>=1.26,<2
 pandas
 scikit-learn
 python-dotenv

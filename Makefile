@@ -18,13 +18,13 @@ frontend:
 
 # ============ Infrastructure ============
 docker-up:
-	docker-compose up -d
+	docker compose up -d
 
 docker-down:
-	docker-compose down
+	docker compose down
 
 docker-prod:
-	docker-compose -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.prod.yml up -d
 
 # ============ Data ============
 seed:
