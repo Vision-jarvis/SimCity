@@ -23,7 +23,7 @@ class SmoothDeffuant(nn.Module):
         self.rho = self.kappa / self.epsilon_base
 
     def compute_radicalization(self, total_edges, cross_community_edges, num_exposed, num_rejected):
-        """
+        r"""
         Computes dynamic radicalization score (Eq 24).
         Args:
             total_edges: Tensor of shape (N,) containing |N_v|

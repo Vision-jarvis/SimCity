@@ -207,13 +207,15 @@ class InterventionSimulator:
         peak_I = max(infected)
         peak_step = int(np.argmax(infected))
         final = history[-1]
+        # np.trapz was renamed to np.trapezoid in NumPy 2.0 (and removed there).
+        _trapz = getattr(np, "trapezoid", None) or np.trapz
         return TrajectoryMetrics(
             peak_I=peak_I,
             peak_I_step=peak_step,
             total_reach=float(N) - final["S"],
             final_Z=final["Z"],
             final_D=final["D"],
-            auc_I=float(np.trapz(infected)),
+            auc_I=float(_trapz(infected)),
             final_mean_opinion=final.get("mean_opinion", 0.0),
         )
 
