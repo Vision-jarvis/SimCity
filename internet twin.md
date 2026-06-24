@@ -7,6 +7,7 @@
 ## 📋 Table of Contents
 
 - [Project Overview](#-project-overview)
+- [Implementation Status](#-implementation-status)
 - [Zero-Cost Strategy](#-zero-cost-strategy)
 - [Architecture](#-architecture)
 - [File Structure](#-file-structure)
@@ -41,6 +42,33 @@ Think: **SimCity for the Internet, powered by AI.**
 
 ---
 
+## ✅ Implementation Status
+
+This document is the original vision. The repository now implements the large
+majority of it. Highlights and divergences from the plan below:
+
+**Built and working** (see `README.md` and `docs/`):
+- 7 ingesters: Reddit, Hacker News, GDELT, RSS, YouTube, **Wikipedia**, **Bluesky** (AT Protocol).
+- NLP suite: embeddings, topic, sentiment, toxicity, stance, misinformation, summarizer.
+- Graph engine: Neo4j client (degrades gracefully when offline), node/edge types, Louvain, PageRank/betweenness.
+- Modeling core under `models/`: Temporal Graph Network, neural Hawkes cross-platform excitation, virality head, Deffuant opinion dynamics, HMF bridge — plus `ml/forecasting/` and Hawkes baselines.
+- **MLOps** (`ml/training/`, `ml/registry/`): MLflow tracking + model registry + drift-gated retraining (local-JSON fallback when MLflow absent), nightly `retrain.yml`.
+- Simulation: SEIR-Z-D engine, LangGraph multi-agent runtime (Influencer/Bot/Skeptic/Community/News), scenario presets, and a **counterfactual intervention simulator** (`simulation/intervention.py`).
+- **Cross-platform narrative-transfer detection** (`analysis_tools/narrative_tracker.py`).
+- FastAPI (REST + GraphQL + WebSocket), Next.js frontend (Dashboard, Graph3D, Simulate, Intervention, Trends, Narratives).
+- Infra: Dockerfiles, Terraform (OCI Always-Free) + k3s manifests + Helm, Prometheus/Grafana, Locust load test, 5 Colab notebooks.
+
+**Divergences from the plan:**
+- The GNN lives in `models/` (repo root), not `ml/gnn/`.
+- Agent personas are consolidated in `simulation/agents/personas.py` rather than one file per agent.
+- Twitter/X is ingested via **Bluesky** (reliable, free) instead of Nitter (most mirrors are dead).
+- Forecasting uses an analytical Hawkes-SEIR model, not a Temporal Fusion Transformer (TFT).
+- `requirements-test.txt` is the lean CI dependency set; the full `requirements.txt` is for production.
+
+**Not yet implemented:** PostgreSQL enrichment store, persisted temporal graph snapshots, TFT forecaster, security audit (auth/rate-limiting).
+
+---
+
 ## 💰 Zero-Cost Strategy
 
 Every component in this project uses **free, open-source, or free-tier** services only. No paid APIs. No paid cloud infra. Here is how:
@@ -67,7 +95,7 @@ Every component in this project uses **free, open-source, or free-tier** service
 | RSS feeds | Any public RSS (free) |
 | Wikipedia trends | Wikimedia API (free) |
 | YouTube | YouTube Data API v3 (10,000 free units/day) |
-| Twitter/X | **No free API** — use Nitter RSS mirrors instead (free) |
+| Twitter/X | **No free API** — use **Bluesky** (AT Protocol public AppView, free, no key) as the social signal |
 
 ### ML Models (Free)
 
@@ -133,6 +161,15 @@ Every component in this project uses **free, open-source, or free-tier** service
 ---
 
 ## 📁 File Structure
+
+> **Note:** the tree below is the original proposed layout. The actual
+> repository follows it closely with a few divergences (see
+> [Implementation Status](#-implementation-status)): the GNN lives in `models/`
+> rather than `ml/gnn/`; agents are consolidated in
+> `simulation/agents/personas.py`; and the repo adds `ml/training/`,
+> `ml/registry/`, `infra/`, `notebooks/`, `analysis_tools/narrative_tracker.py`,
+> `simulation/intervention.py`, Wikipedia/Bluesky ingesters, and
+> `requirements-test.txt`.
 
 ```
 ai-digital-twin/
@@ -403,15 +440,15 @@ ai-digital-twin/
 ### Phase 0 — Foundation (Weeks 1–2)
 > Goal: Repo, dev environment, data flowing, basic graph up.
 
-- [ ] Initialize repository, set up `.env.example`, `docker-compose.yml`
-- [ ] Implement Reddit and Hacker News ingesters
-- [ ] Set up Kafka with Docker Compose
-- [ ] Implement basic NLP pipeline (embeddings + sentiment)
-- [ ] Spin up Neo4j Community Edition
-- [ ] Build basic graph schema (Users, Topics, Communities)
-- [ ] Write basic FastAPI endpoints (`/health`, `/graph/nodes`, `/graph/edges`)
-- [ ] Seed graph with 1 week of historical HN + Reddit data
-- [ ] Set up GitHub Actions CI (lint + test)
+- [x] Initialize repository, set up `.env.example`, `docker-compose.yml`
+- [x] Implement Reddit and Hacker News ingesters
+- [x] Set up Kafka with Docker Compose
+- [x] Implement basic NLP pipeline (embeddings + sentiment)
+- [x] Spin up Neo4j Community Edition
+- [x] Build basic graph schema (Users, Topics, Communities)
+- [x] Write basic FastAPI endpoints (`/health`, `/graph/nodes`, `/graph/edges`)
+- [x] Seed graph script (`scripts/seed_graph.py`, `scripts/backfill_gdelt.py`)
+- [x] Set up GitHub Actions CI (lint + test)
 
 **Milestone:** Live data flowing into graph, queryable via API.
 
@@ -420,14 +457,14 @@ ai-digital-twin/
 ### Phase 1 — NLP Intelligence (Weeks 3–4)
 > Goal: Every incoming post enriched with NLP metadata.
 
-- [ ] BERTopic topic modeling on incoming posts
-- [ ] Sentiment analysis pipeline (cardiffnlp/twitter-roberta)
-- [ ] Toxicity classifier (Detoxify)
-- [ ] Stance detection model
-- [ ] Misinformation probability scorer (ClaimBuster API — free)
-- [ ] Semantic clustering with sentence-transformers
+- [x] BERTopic topic modeling on incoming posts
+- [x] Sentiment analysis pipeline (cardiffnlp/twitter-roberta)
+- [x] Toxicity classifier (Detoxify)
+- [x] Stance detection model
+- [x] Misinformation probability scorer (heuristic scorer in `nlp/`)
+- [x] Semantic clustering with sentence-transformers
 - [ ] Store enriched records in PostgreSQL + vector index in ChromaDB
-- [ ] Add `/nlp/analyze` API endpoint
+- [x] Add `/nlp/analyze` API endpoint (`/search/nlp/analyze`)
 
 **Milestone:** Every post tagged with topic, sentiment, toxicity, virality signal.
 
@@ -436,15 +473,15 @@ ai-digital-twin/
 ### Phase 2 — Graph Intelligence (Weeks 5–7)
 > Goal: Live, evolving internet knowledge graph.
 
-- [ ] Build graph update pipeline (Kafka consumer → Neo4j writer)
-- [ ] Implement node types: User, Topic, Community, Hashtag, Organization
-- [ ] Implement edge types: Influence, Repost, Reply, Narrative Transfer
-- [ ] Community detection with Louvain algorithm
-- [ ] Influence scoring with PageRank + betweenness centrality
+- [x] Build graph update pipeline (Kafka consumer → Neo4j writer)
+- [x] Implement node types: User, Topic, Community, Hashtag, Organization
+- [x] Implement edge types: Influence, Repost, Reply, Narrative Transfer
+- [x] Community detection with Louvain algorithm
+- [x] Influence scoring with PageRank + betweenness centrality
 - [ ] Build temporal graph snapshots (graph at time T)
-- [ ] Add GDELT news ingester
-- [ ] Cross-platform narrative transfer detection (Reddit → HN → News)
-- [ ] Graph query API endpoints (Cypher-backed)
+- [x] Add GDELT news ingester
+- [x] Cross-platform narrative transfer detection (`analysis_tools/narrative_tracker.py`, `/trends/narrative-transfer`)
+- [x] Graph query API endpoints (Cypher-backed)
 
 **Milestone:** A living, queryable graph of ~100K+ nodes and edges.
 
@@ -453,15 +490,15 @@ ai-digital-twin/
 ### Phase 3 — GNN & Forecasting (Weeks 8–11)
 > Goal: Predict virality and cascade propagation.
 
-- [ ] Implement Temporal GNN for influence spread (PyG)
-- [ ] Train virality binary classifier on historical data
-- [ ] Implement Graph Attention Network for high-impact node detection
-- [ ] Build diffusion model for idea propagation
-- [ ] Implement Temporal Fusion Transformer for time-series forecasting
-- [ ] Build trend prediction pipeline (next 6h/24h/72h)
-- [ ] Set up MLflow for experiment tracking
-- [ ] Build scheduled retraining pipeline (GitHub Actions nightly)
-- [ ] Model evaluation dashboard (Grafana)
+- [x] Implement Temporal GNN for influence spread (PyG) — `models/tgn_core.py`
+- [x] Train virality classifier (`models/virality_head.py`, `train.py`)
+- [x] Graph attention for high-impact nodes (TransformerConv in TGN + influence scorer)
+- [x] Build diffusion model for idea propagation (Hawkes + SEIR-Z-D + Deffuant)
+- [ ] Implement Temporal Fusion Transformer (forecaster is analytical Hawkes-SEIR, not TFT)
+- [x] Build trend prediction pipeline (next 6h/24h/72h) — `ml/forecasting/`
+- [x] Set up MLflow for experiment tracking (`ml/training/`, `ml/registry/`)
+- [x] Build scheduled retraining pipeline (GitHub Actions nightly) — `retrain.yml`
+- [x] Model evaluation dashboard (Grafana) — `monitoring/grafana/dashboards/model_performance.json`
 
 **Milestone:** Virality score + predicted reach for any incoming topic.
 
@@ -470,14 +507,15 @@ ai-digital-twin/
 ### Phase 4 — Simulation Engine (Weeks 12–15)
 > Goal: Run "what-if" internet scenarios.
 
-- [ ] Implement base agent class with behavioral parameters
-- [ ] Build Influencer, Community, Bot, News, Skeptic agents
-- [ ] Implement LangGraph-based agent runtime
-- [ ] Build scenario configuration system (JSON/YAML scenarios)
-- [ ] Preset scenarios: influencer tweet, misinfo outbreak, platform outage
-- [ ] Simulation output: propagation map, virality curve, polarization delta
-- [ ] Simulation result caching and replay
-- [ ] Simulation API endpoints (`/simulate/run`, `/simulate/replay`)
+- [x] Implement base agent class with behavioral parameters
+- [x] Build Influencer, Community, Bot, News, Skeptic agents
+- [x] Implement LangGraph-based agent runtime
+- [x] Build scenario configuration system (`simulation/scenario_builder.py`)
+- [x] Preset scenarios: influencer tweet, misinfo outbreak, platform outage
+- [x] Simulation output: propagation map, virality curve, polarization delta
+- [x] Simulation result caching and replay
+- [x] Simulation API endpoints (`/simulate/run`, `/simulate/replay`)
+- [x] **Counterfactual intervention simulator** (`/simulate/intervention`) — baseline vs. what-if
 
 **Milestone:** Fully runnable "what-if" scenarios with multi-agent dynamics.
 
@@ -486,14 +524,14 @@ ai-digital-twin/
 ### Phase 5 — Frontend Visualization (Weeks 16–19)
 > Goal: Make it visually stunning and interactive.
 
-- [ ] Set up Next.js project with Tailwind + Zustand
-- [ ] Real-time 3D internet graph (Three.js + WebSocket)
-- [ ] Virality heatmap (D3.js)
-- [ ] Narrative evolution timeline
-- [ ] Geographic sentiment map (D3 + GeoJSON)
-- [ ] Cascade simulation playback (animation)
-- [ ] Scenario simulator UI (form → run → watch)
-- [ ] Live trending topics feed
+- [x] Set up Next.js project with Tailwind + Zustand
+- [x] Real-time 3D internet graph (Three.js + WebSocket)
+- [x] Virality heatmap (D3.js)
+- [x] Narrative evolution timeline
+- [x] Geographic sentiment map (D3 + GeoJSON)
+- [x] Cascade simulation playback (animation)
+- [x] Scenario simulator UI (form → run → watch) + intervention comparison page
+- [x] Live trending topics feed
 
 **Milestone:** Fully interactive visualization dashboard.
 
@@ -502,14 +540,14 @@ ai-digital-twin/
 ### Phase 6 — Production Hardening (Weeks 20–22)
 > Goal: Reliable, monitored, deployable system.
 
-- [ ] Deploy to Oracle Cloud Free Tier (Terraform + k3s)
-- [ ] Set up Prometheus metrics across all services
-- [ ] Build Grafana dashboards (ingestion rate, model latency, API health)
-- [ ] Configure alerting rules
-- [ ] Load testing (Locust)
+- [x] Deploy to Oracle Cloud Free Tier (Terraform + k3s) — `infra/`
+- [x] Set up Prometheus metrics across all services
+- [x] Build Grafana dashboards (overview + model performance)
+- [x] Configure alerting rules (`monitoring/alerts/rules.yml`)
+- [x] Load testing (Locust) — `scripts/locustfile.py`
 - [ ] Security audit (auth, rate limiting, secrets management)
-- [ ] Full README and API documentation
-- [ ] Create 5 demo notebooks (Colab-ready)
+- [x] Full README and API documentation (`docs/`)
+- [x] Create 5 demo notebooks (Colab-ready) — `notebooks/`
 
 **Milestone:** Production-grade, monitored, zero-cost deployment.
 
@@ -646,7 +684,7 @@ cp .env.example .env
 # Edit .env with your free API keys (Reddit, YouTube)
 
 # 3. Start infrastructure services
-docker-compose up -d
+docker compose up -d
 
 # 4. Install Python dependencies
 python -m venv venv
@@ -683,8 +721,8 @@ Access:
 | GDELT | Direct download / API | Unlimited | Fully open |
 | RSS/News | feedparser | Unlimited | Any public RSS |
 | YouTube | Data API v3 | 10K units/day | Free with Google account |
-| Wikipedia | Wikimedia API | Unlimited | Free |
-| Twitter/X | Nitter RSS mirrors | Varies | No official API needed |
+| Wikipedia | Wikimedia API | Unlimited | Free, no key (recent-changes stream) |
+| Bluesky | AT Protocol AppView | Generous | Free, no key (app password optional for search) |
 
 **No paid APIs required.**
 
