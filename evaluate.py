@@ -16,9 +16,15 @@ def evaluate_model(
     raw_msg_dim,
     device,
     hawkes_loss_fn=None,
+    save_preds_path=None,
 ):
     """
     Evaluates the SimCity model on a validation/test split.
+
+    If ``save_preds_path`` is given, per-event test predictions are saved as an
+    ``.npz`` (dst narrative id, true, pred) so downstream tooling can compute
+    within-narrative residual metrics that isolate the temporal/excitation
+    signal from a narrative's static reach.
     """
     tgn.eval()
     pooling.eval()
@@ -32,6 +38,12 @@ def evaluate_model(
     
     all_preds = []
     all_trues = []
+    all_dst = []
+    all_intensity = []
+    all_plat = []
+    all_alpha_off = []
+    all_event_plat = []
+    all_event_t = []
     hawkes_losses = []
     if hawkes_loss_fn is not None and hasattr(hawkes_loss_fn, "reset_state"):
         hawkes_loss_fn.reset_state()
@@ -92,18 +104,28 @@ def evaluate_model(
             platform_ids = batch.platform
             
             # Dynamic Influence Score
-            inf_src, _ = influence_scorer(src, pos_dst, t)
+            inf_src, inf_dst = influence_scorer(src, pos_dst, t)
             h_P = pooling(h_src, platform_ids, inf_src.detach())
             
             # Update HMF Bridge
             hmf_bridge.update_degree_distribution(influence_scorer.temporal_degree[src], influence_scorer.temporal_degree[pos_dst])
             
             gdelt_volume = msg[:, -1]
+            exc_feats = (
+                torch.stack([inf_src, inf_dst], dim=-1).detach()
+                if getattr(virality_head, "exc_dim", 0) > 0 else None
+            )
             beta, mu, alpha, gamma, pred_virality = virality_head(
-                h_src, h_dst_pos, h_P, gdelt_volume
+                h_src, h_dst_pos, h_P, gdelt_volume, exc_feats=exc_feats
             )
 
             if hawkes_loss_fn is not None:
+                if save_preds_path is not None and hasattr(hawkes_loss_fn, "event_intensities"):
+                    inten, ord_plat = hawkes_loss_fn.event_intensities(
+                        t, platform_ids, mu, alpha, gamma, update_state=False
+                    )
+                    all_intensity.append(inten.cpu().numpy())
+                    all_plat.append(ord_plat.cpu().numpy())
                 hawkes_losses.append(
                     hawkes_loss_fn(t, platform_ids, mu, alpha, gamma).detach().cpu().item()
                 )
@@ -113,6 +135,19 @@ def evaluate_model(
             if mask.any():
                 all_preds.append(pred_virality[mask].cpu().numpy())
                 all_trues.append(batch.y[mask].cpu().numpy())
+                all_dst.append(batch.dst[mask].cpu().numpy())
+                if save_preds_path is not None:
+                    # Per-event cross-platform excitation mass (off-diagonal
+                    # alpha / decay-normalised): the narrative-conditioned
+                    # "bridge" signal used by the transfer-detection metric.
+                    P_ = alpha.size(-1)
+                    off = ~torch.eye(P_, dtype=torch.bool, device=alpha.device)
+                    branch = alpha / gamma.clamp_min(1e-6)
+                    all_alpha_off.append(
+                        branch[mask][:, off].mean(dim=-1).detach().cpu().numpy()
+                    )
+                    all_event_plat.append(batch.platform[mask].cpu().numpy())
+                    all_event_t.append(batch.t[mask].cpu().numpy())
                 
     metrics = {"virality_mae": None, "virality_rmse": None, "hawkes_nll": None}
     if len(all_preds) > 0:
@@ -122,6 +157,23 @@ def evaluate_model(
         rmse = np.sqrt(mean_squared_error(trues, preds))
         metrics["virality_mae"] = mae
         metrics["virality_rmse"] = rmse
+        if save_preds_path is not None:
+            dst = np.concatenate(all_dst)
+            extra = {}
+            if all_alpha_off:
+                extra = {
+                    "alpha_off": np.concatenate(all_alpha_off),
+                    "event_platform": np.concatenate(all_event_plat),
+                    "event_t": np.concatenate(all_event_t),
+                }
+            np.savez(save_preds_path, dst=dst, true=trues, pred=preds, **extra)
+            if all_intensity:
+                inten_path = save_preds_path.replace(".npz", "") + "_hawkes.npz"
+                np.savez(
+                    inten_path,
+                    intensity=np.concatenate(all_intensity),
+                    platform=np.concatenate(all_plat),
+                )
         msg = f"Evaluation -> Virality MAE: {mae:.4f} | RMSE: {rmse:.4f}"
         if hawkes_losses:
             metrics["hawkes_nll"] = float(np.mean(hawkes_losses))

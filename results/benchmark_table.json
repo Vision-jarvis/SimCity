@@ -1,0 +1,27 @@
+{
+  "dataset": "data/synthetic_events.pkl",
+  "n_events": 8203,
+  "virality": {
+    "naive": {
+      "virality_mae": 0.8245580002529369,
+      "virality_rmse": 0.9761841382039576,
+      "train_mean": 1.3286687039121796
+    },
+    "static_gnn_seir": {
+      "virality_mae": 0.9232309435983356,
+      "virality_rmse": 1.1538888774291578
+    },
+    "vanilla_tgn": {
+      "virality_mae": 0.9273247419715785,
+      "virality_rmse": 1.1398412951597734
+    },
+    "simcity": {
+      "virality_mae": 0.8659600019454956,
+      "virality_rmse": 1.0410088300704956,
+      "hawkes_nll": 0.7342627512084113
+    }
+  },
+  "hawkes": {
+    "static_mhp_test_nll": 0.7029382617925283
+  }
+}

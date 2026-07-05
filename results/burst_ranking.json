@@ -1,0 +1,34 @@
+{
+  "SimCity (full)": {
+    "auc": 0.40888697006636865,
+    "avg_precision": 0.2822008140646516,
+    "precision_at_k": 0.2536231884057971,
+    "positive_rate": 0.3403205918618989,
+    "spearman": -0.16691380484909188,
+    "n": 1622
+  },
+  "Vanilla TGN": {
+    "auc": 0.4541937559257754,
+    "avg_precision": 0.30185795824075845,
+    "precision_at_k": 0.29891304347826086,
+    "positive_rate": 0.3403205918618989,
+    "spearman": -0.09009492901519482,
+    "n": 1622
+  },
+  "Static GNN + SEIR": {
+    "auc": 0.49684410131382906,
+    "avg_precision": 0.3422193893527871,
+    "precision_at_k": 0.35144927536231885,
+    "positive_rate": 0.3403205918618989,
+    "spearman": 0.0006861638466867806,
+    "n": 1622
+  },
+  "Oracle (recent-excitation)": {
+    "auc": 0.5073869023432209,
+    "avg_precision": 0.361242560098058,
+    "precision_at_k": 0.3713768115942029,
+    "positive_rate": 0.3403205918618989,
+    "spearman": 0.14133076010964007,
+    "n": 1622
+  }
+}

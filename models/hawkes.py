@@ -156,3 +156,45 @@ class StreamingHawkesLoss(nn.Module):
             self.last_time = last_time.detach()
 
         return total_nll / t.numel()
+
+    @torch.no_grad()
+    def event_intensities(self, t_events, platform_ids, mu, alpha, gamma, update_state=True):
+        """Replay the streaming recursion and return the per-event, per-platform
+        conditional intensity lambda_i(t_k) computed from history strictly before
+        t_k. Shape (N, P), chronologically ordered, plus the ordered platforms.
+        Used for causal next-platform prediction (which platform fires next)."""
+        if t_events.numel() == 0:
+            return mu.new_zeros(0, self.num_platforms), platform_ids[:0].long()
+
+        order = torch.argsort(t_events)
+        t = t_events[order].to(mu.dtype) / self.time_scale_seconds
+        platform = platform_ids[order].long()
+        mu = mu[order].clamp_min(self.eps)
+        alpha = alpha[order].clamp_min(0.0)
+        gamma = gamma[order].clamp_min(self.eps)
+
+        state = self.excitation_state.to(device=mu.device, dtype=mu.dtype).clone()
+        last_time = self.last_time.to(device=mu.device, dtype=mu.dtype)
+        has_history = torch.isfinite(last_time)
+        out = mu.new_zeros(t.numel(), self.num_platforms)
+
+        for idx in range(t.numel()):
+            current_t = t[idx]
+            interval = torch.where(
+                has_history, (current_t - last_time).clamp_min(0.0),
+                current_t.new_tensor(0.0),
+            )
+            decay = torch.exp(-gamma[idx] * interval)
+            decayed_state = state * decay
+            intensity = (mu[idx] + (alpha[idx] * decayed_state).sum(dim=0)).clamp_min(self.eps)
+            out[idx] = intensity
+            event_update = F.one_hot(platform[idx], num_classes=self.num_platforms).to(
+                dtype=mu.dtype, device=mu.device)
+            state = decayed_state + event_update.unsqueeze(1).expand_as(state)
+            last_time = current_t
+            has_history = torch.ones((), dtype=torch.bool, device=mu.device)
+
+        if update_state:
+            self.excitation_state = state.detach()
+            self.last_time = last_time.detach()
+        return out, platform

@@ -8,11 +8,15 @@ class SimCityLoss(nn.Module):
     Balances TGN InfoNCE, Hawkes NLL, and Virality Regression
     using Kendall's uncertainty weighting (Kendall et al., 2018).
     """
-    def __init__(self):
+    def __init__(self, task_weights=(1.0, 1.0, 1.0)):
         super().__init__()
         # Learnable log variances to ensure positivity and stable gradients
         # We initialize them to 0.0, meaning sigma^2 = 1.0 initially.
         self.log_vars = nn.Parameter(torch.zeros(3))
+        # Fixed per-task multipliers (TGN, Hawkes, Virality). Defaults to the
+        # standard homoscedastic setting; can up-weight a target task (e.g.
+        # virality) to counter multi-task dilution on the evaluated metric.
+        self.register_buffer('task_weights', torch.tensor(task_weights, dtype=torch.float))
 
     def compute_tgn_loss(self, h_src, h_dst_pos, h_dst_neg):
         """
@@ -52,7 +56,7 @@ class SimCityLoss(nn.Module):
         """
         Combines task losses using homoscedastic uncertainty weighting.
         """
-        losses = torch.stack([l_tgn, l_hawkes, l_virality])
+        losses = torch.stack([l_tgn, l_hawkes, l_virality]) * self.task_weights
         log_vars = self.log_vars.clamp(min=-6.0, max=6.0)
         precision = torch.exp(-log_vars)
         return (precision * losses + 0.5 * log_vars).sum()

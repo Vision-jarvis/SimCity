@@ -33,9 +33,14 @@ class ViralityHead(nn.Module):
     Neural mapping from TGN embeddings to SEIR-Z-D epidemiological 
     and Multivariate Hawkes process parameters.
     """
-    def __init__(self, embedding_dim, num_platforms=3, hidden_dim=64):
+    def __init__(self, embedding_dim, num_platforms=3, hidden_dim=64, exc_dim=0):
         super().__init__()
         self.num_platforms = num_platforms
+        # Number of observed excitation features (e.g. current cross-platform
+        # Hawkes intensity / recent event-rate) fed into the virality readout.
+        # Near-future engagement is governed by the instantaneous excitation
+        # state; without it the head is blind to the signal it must predict.
+        self.exc_dim = exc_dim
         
         # MLP for beta (infectivity/exposure rate)
         # Input: [h_v(t) || h_c(t)] -> Dim: 2 * embedding_dim
@@ -66,9 +71,10 @@ class ViralityHead(nn.Module):
             nn.Linear(hidden_dim, num_platforms * num_platforms)
         )
         
-        # Virality Regression Output (for E_c prediction)
+        # Virality Regression Output (for E_c prediction). Input is
+        # [h_v || h_c || mean(h_P)] plus any observed excitation features.
         self.mlp_virality = nn.Sequential(
-            nn.Linear(3 * embedding_dim, hidden_dim),
+            nn.Linear(3 * embedding_dim + exc_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1)
         )
@@ -77,13 +83,15 @@ class ViralityHead(nn.Module):
         self.register_buffer('target_mean', torch.tensor(0.0))
         self.register_buffer('target_std', torch.tensor(1.0))
 
-    def forward(self, h_v, h_c, h_P, gdelt_volume=None):
+    def forward(self, h_v, h_c, h_P, gdelt_volume=None, exc_feats=None):
         """
         Args:
             h_v: (B, D) Source node (user) temporal embedding
             h_c: (B, D) Destination node (narrative) temporal embedding
             h_P: (num_platforms, D) Platform pooled embeddings
             gdelt_volume: optional (B,) or (B, 1) exogenous news volume
+            exc_feats: optional (B, exc_dim) observed excitation features
+                (current cross-platform intensity / recent event rate)
         """
         B = h_v.size(0)
         if gdelt_volume is None:
@@ -106,6 +114,10 @@ class ViralityHead(nn.Module):
         gamma = F.softplus(self.mlp_gamma(z_hawkes)).view(-1, self.num_platforms, self.num_platforms) + 1e-6
         
         z_virality = torch.cat([h_v, h_c, h_P.mean(dim=0).unsqueeze(0).expand(B, -1)], dim=-1)
+        if self.exc_dim > 0:
+            if exc_feats is None:
+                exc_feats = z_virality.new_zeros(B, self.exc_dim)
+            z_virality = torch.cat([z_virality, exc_feats], dim=-1)
         virality = self.mlp_virality(z_virality).squeeze(-1)
         virality = virality * self.target_std + self.target_mean  # scale to target range
         

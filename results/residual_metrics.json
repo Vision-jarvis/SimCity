@@ -1,0 +1,26 @@
+{
+  "SimCity (full)": {
+    "raw_mae": 0.8659599965853657,
+    "residual_mae": 0.6336732714376535,
+    "mean_predictor_mae": 0.5866181371683211,
+    "skill_vs_mean": -0.08021425061365028,
+    "within_narrative_spearman": -0.11942644152088132,
+    "n_test_events": 1668
+  },
+  "Vanilla TGN": {
+    "raw_mae": 0.9273247419715785,
+    "residual_mae": 0.6374110284791181,
+    "mean_predictor_mae": 0.5866181371683211,
+    "skill_vs_mean": -0.08658595446090467,
+    "within_narrative_spearman": -0.05079638589143316,
+    "n_test_events": 1668
+  },
+  "Static GNN + SEIR": {
+    "raw_mae": 0.9232309435983356,
+    "residual_mae": 0.5886458142645703,
+    "mean_predictor_mae": 0.5866181371683211,
+    "skill_vs_mean": -0.003456553706363552,
+    "within_narrative_spearman": -0.00265422240935522,
+    "n_test_events": 1668
+  }
+}

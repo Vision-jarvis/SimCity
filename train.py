@@ -14,11 +14,20 @@ from models.hmf_bridge import DegreeCorrelatedHMF
 from evaluate import evaluate_model
 
 def train():
+    # Reproducibility: multi-seed runs report mean +/- std across seeds.
+    import os as _osr
+    _seed = int(_osr.environ.get('SIMCITY_SEED', '0'))
+    torch.manual_seed(_seed)
+    import numpy as _npr
+    _npr.random.seed(_seed)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     # 1. Load Data
-    print("Loading synthetic dataset...")
-    data, train_idx, val_idx, test_idx = load_simcity_temporal_data('data/synthetic_events.pkl')
+    import os as _osd
+    data_path = _osd.environ.get('SIMCITY_DATA', 'data/synthetic_events.pkl')
+    print(f"Loading dataset: {data_path}")
+    data, train_idx, val_idx, test_idx = load_simcity_temporal_data(data_path)
     train_data = data[train_idx]
     val_data = data[val_idx]
     test_data = data[test_idx]
@@ -40,8 +49,14 @@ def train():
     
     tgn = SimCityTGN(num_nodes, raw_msg_dim, embedding_dim, time_dim, embedding_dim).to(device)
     pooling = PlatformPooling(embedding_dim, num_platforms).to(device)
-    virality_head = ViralityHead(embedding_dim, num_platforms).to(device)
-    loss_module = SimCityLoss().to(device)
+    import os as _os1
+    exc_dim = int(_os1.environ.get('SIMCITY_EXC_DIM', '2'))  # 0 disables the excitation-conditioned head
+    virality_head = ViralityHead(embedding_dim, num_platforms, exc_dim=exc_dim).to(device)
+    import os as _os0
+    _tw = float(_os0.environ.get('SIMCITY_TGN_W', '1.0'))
+    _hw = float(_os0.environ.get('SIMCITY_HAWKES_W', '1.0'))
+    _vw = float(_os0.environ.get('SIMCITY_VIRALITY_W', '1.0'))
+    loss_module = SimCityLoss(task_weights=(_tw, _hw, _vw)).to(device)
     hawkes_loss_fn = StreamingHawkesLoss(num_platforms=num_platforms).to(device)
     
     deffuant = SmoothDeffuant().to(device)
@@ -72,7 +87,8 @@ def train():
         # Shape: (B, M)
         return torch.randint(0, num_nodes, (dst.size(0), num_negatives), device=dst.device)
     
-    epochs = 15
+    import os as _os
+    epochs = int(_os.environ.get('SIMCITY_EPOCHS', '15'))
     # Before training begins — once
     tgn.reset_memory()
     neighbor_loader.reset_state()
@@ -168,8 +184,9 @@ def train():
             
             # 4. Virality Head Forward Pass
             gdelt_volume = msg[:, -1]
+            exc_feats = torch.stack([inf_src, inf_dst], dim=-1).detach() if exc_dim > 0 else None
             beta, mu, alpha, gamma, pred_virality = virality_head(
-                h_src, h_dst_pos, h_P, gdelt_volume
+                h_src, h_dst_pos, h_P, gdelt_volume, exc_feats=exc_feats
             )
             
             # Exercise the HMF bridge forward pass (macroscopic beta is used by
@@ -222,11 +239,42 @@ def train():
     neighbor_loader.reset_state()
     hawkes_loss_fn.reset_state()
     influence_scorer.reset_state()
+    import os as _os2
+    _os2.makedirs('results', exist_ok=True)
+    _tag = _os2.environ.get('SIMCITY_TAG', '')
+    _preds_path = f'results/simcity_test_preds{("_" + _tag) if _tag else ""}.npz'
     test_metrics = evaluate_model(
         tgn, pooling, virality_head, deffuant, influence_scorer, hmf_bridge, test_loader, neighbor_loader,
-        num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn
+        num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn,
+        save_preds_path=_preds_path
     )
     print(f"Test metrics: {test_metrics}")
+
+    # Persist final held-out test metrics so downstream tooling (MLflow pipeline,
+    # benchmark aggregation) logs real numbers instead of placeholders.
+    import json, os
+    os.makedirs('results', exist_ok=True)
+    naive_train_mean = train_data.y[~train_data.y.isnan()].mean().item()
+    naive_test_preds = torch.full_like(test_data.y, naive_train_mean)
+    test_mask = ~test_data.y.isnan()
+    naive_test_mae = (naive_test_preds[test_mask] - test_data.y[test_mask]).abs().mean().item()
+    naive_test_rmse = ((naive_test_preds[test_mask] - test_data.y[test_mask]) ** 2).mean().sqrt().item()
+    def _to_float(d):
+        return {k: (float(v) if v is not None else None) for k, v in d.items()}
+    results = {
+        "model": "SimCity (TGN + neural Hawkes + virality head)",
+        "epochs": epochs,
+        "n_train_events": int(train_data.num_events),
+        "n_test_events": int(test_data.num_events),
+        "test": _to_float(test_metrics),
+        "naive_mean_baseline": {
+            "virality_mae": float(naive_test_mae),
+            "virality_rmse": float(naive_test_rmse),
+        },
+    }
+    with open(os.path.join('results', 'simcity_metrics.json'), 'w', encoding='utf-8') as f:
+        json.dump(results, f, indent=2)
+    print("Saved results/simcity_metrics.json")
 
     print("\n--- Running Sanity Checks ---")
 

@@ -61,9 +61,19 @@ compartmental model grounded by a Degree-Correlated Heterogeneous Mean-Field
 (HMF) approximation, which maps continuous-time Temporal Graph Network (TGN)
 embeddings directly into epidemiological transition rates. We couple this with a
 Neural Multivariate Hawkes Process for cross-platform narrative transfer and a
-Filippov-compliant smooth Deffuant model for agent behavioural evolution. We
-establish a comprehensive experimental framework for empirical validation across
-multiplex internet graphs, targeting KDD/WWW/ICWSM.
+Filippov-compliant smooth Deffuant model for agent behavioural evolution.
+Empirically, we make three contributions: (1) we show that raw engagement-count
+regression --- the de-facto virality metric --- is intrinsically noise-dominated
+under near-critical cascade dynamics (even an oracle handed the true excitation
+state attains negative residual skill), arguing for timing- and transfer-based
+evaluation; (2) on a controlled multiplex benchmark with ground-truth
+cross-platform excitation, our narrative-conditioned intensity model detects
+\emph{which} narratives will transfer across platforms (AUC $0.653 \pm 0.005$
+over three seeds, $p < 1.1\times10^{-4}$, robust to popularity and reach
+confounds) --- a task on
+which any static Hawkes process is random by construction; and (3) we release an
+accumulating live Hacker News + GDELT collector and report honest limitations of
+a first real-data snapshot.
 \end{abstract}
 
 % =============================================================
@@ -328,7 +338,7 @@ heavy-tailed graphs):
   \label{eq:info-nce}
 \end{equation}
 We draw $M=20$ negatives per positive edge, following Rossi et al.~(2020) as a
-baseline; an ablation over $M\in[10,200]$ is reported in \cref{sec:ablations}.
+baseline; a systematic ablation over $M\in[10,200]$ is left as future work.
 
 \paragraph{(2) Hawkes Negative Log-Likelihood.}
 \begin{equation}
@@ -513,8 +523,8 @@ and the steepness hyperparameter is bound as
 \end{equation}
 with $\kappa$ a fixed scaling constant. As $\rho\to\infty$, \cref{eq:deffuant}
 recovers the exact Deffuant threshold; finite $\rho$ guarantees smoothness at
-the boundary. A sensitivity analysis confirming that steady-state opinion
-clusters remain invariant for $\rho > 10^2$ is provided in Appendix~B.
+the boundary. Appendix~B discusses the expected insensitivity of steady-state
+opinion clusters for $\rho > 10^2$.
 
 \begin{remark}
 $x_c \coloneqq x_u(t_{\mathrm{post}})$: content carries the immutable opinion
@@ -582,7 +592,7 @@ We explicitly replace Betweenness Centrality with Temporal Degree Centrality
 for computational tractability: exact betweenness is $\mathcal{O}(V^3)$ and
 ego-network betweenness is $\mathcal{O}(k^3)$, both catastrophic for social
 hubs where $k > 10^4$. We acknowledge that global path-structure information
-is sacrificed and empirically quantify this tradeoff in \cref{sec:ablations}.
+is sacrificed; quantifying this tradeoff empirically is left as future work.
 
 The learned weights $\omega_1,\omega_2,\omega_3$ are optimised to maximise
 the correlation between $I(v,t)$ and the likelihood of node $v$ triggering a
@@ -596,80 +606,108 @@ parameter estimation.
 \label{sec:experiments}
 % =============================================================
 
-\subsection{Dataset Specification}
+\subsection{Datasets}
 \label{sec:gdelt}
 
-We construct a 3-month temporal multiplex graph spanning January 1 --
-March 31, 2024, drawn from four sources:
-\begin{itemize}[noitemsep]
-  \item \textbf{Reddit}: real-time ingestion of r/news and r/politics via the
-        Reddit API (posts and full comment trees).
-  \item \textbf{Hacker News}: full event firehose via the official Firebase API.
-  \item \textbf{GDELT}: 15-minute Global Knowledge Graph (GKG) updates.
-        The exogenous shock $\mu_i(t)$ is explicitly defined as the
-        \emph{tone-weighted article volume} matching the narrative's NLP
-        embedding published within the $t$-th 15-minute bin. Concretely,
-        for each bin $t$:
-        \[
-          \mu_i(t)
-          = \sum_{a\in\mathcal{A}_t}
-            \mathrm{sim}\!\left(\hv_c(t),\;\mathrm{emb}(a)\right)
-            \cdot \mathrm{tone}(a),
-        \]
-        where $\mathcal{A}_t$ is the set of GDELT articles in bin $t$,
-        $\mathrm{emb}(a)$ is the article's NLP embedding, and
-        $\mathrm{tone}(a)$ is the GDELT GoldsteinScale-normalised tone score.
-\end{itemize}
+\paragraph{Synthetic multiplex benchmark (controlled ground truth).}
+Because no public corpus provides ground-truth cross-platform excitation, we
+construct a generative benchmark whose events are produced by a per-narrative,
+cross-platform Hawkes branching process (8{,}203 events, 320 narratives, 3
+platforms). Each narrative $n$ carries a latent bridge factor $b_n$ governing
+its Reddit$\to$HN$\to$News transfer matrix, and a latent reach factor governing
+its exogenous volume; branching is clamped near-critical (column sums
+$\le 0.93$), yielding a target whose variance is 68\% within-narrative
+(temporal). The generator is released with the code.
 
-\paragraph{Chronological Splitting and Leakage Prevention.}
-The dataset is partitioned \emph{strictly chronologically} into a 70/10/20
-train/validation/test split (no random shuffling). To prevent temporal data
-leakage, TGN memory states $\bs_v(t)$ and Hawkes event history $\cH_t$ are
-completely reset at the boundaries of the validation and test sets.
+\paragraph{Real multiplex snapshot (live Hacker News + GDELT).}
+We additionally ingest a live two-platform corpus: 5{,}653 Hacker News stories
+(Algolia API) and 431 GDELT news articles retrieved on the same topics, linked
+into 400 token-Jaccard narrative clusters of which 69 genuinely span both
+sources. This snapshot validates that the full pipeline runs on real data; its
+platform imbalance (93\%/7\%) limits statistical power for transfer analysis
+(\cref{sec:limitations}), and the released collector accumulates further data
+across runs.
+
+\paragraph{Chronological splitting and leakage prevention.}
+All datasets are partitioned \emph{strictly chronologically} into 70/10/20
+train/validation/test splits. TGN memory states $\bs_v(t)$ and Hawkes history
+$\cH_t$ are reset at split boundaries; a shuffled-timestamp control (below)
+verifies that no ordering leakage remains.
 
 \subsection{Baselines}
 
 \begin{enumerate}[noitemsep]
-  \item \textbf{Static GNN + SEIR}: GraphSAGE over temporal snapshot graphs
-        paired with a standard deterministic SEIR ODE (ablates the temporal
-        and stochastic components).
-  \item \textbf{Vanilla TGN}~\citep{rossi2020temporal}: continuous-time dynamic
-        graph model without the SEIR-Z-D bridge or Virality Head.
-  \item \textbf{Standard MHP}: multivariate Hawkes with static $\alpha$ matrices
-        (no graph-structural intelligence).
-  \item \textbf{JODIE}~\citep{kumar2019predicting}: a competitive temporal graph
-        model with trajectory-based user/item embedding, representing a recent
-        strong baseline for temporal interaction prediction.
+  \item \textbf{Static GNN + SEIR}: GraphSAGE over a train-window snapshot
+        graph with the same virality readout (ablates continuous time).
+  \item \textbf{Vanilla TGN}~\citep{rossi2020temporal}: our TGN core with a
+        plain readout, without the Hawkes head, HMF bridge, or behavioural
+        coupling.
+  \item \textbf{Static MHP}: trainable multivariate Hawkes with one global
+        $(\mu,\alpha,\gamma)$ (no per-narrative conditioning).
+  \item \textbf{Trivial controls}: train-mean predictor, marginal platform
+        prior, and last-platform persistence.
 \end{enumerate}
 
-\subsection{Evaluation Metrics}
+\subsection{Results}
+\label{sec:results}
 
-\begin{itemize}[noitemsep]
-  \item \textbf{Macro-virality}: MAE and RMSE on log-engagement regression
-        ($\mathcal{L}_{\mathrm{Virality}}$).
-  \item \textbf{Micro-spreaders}: Precision@$K$ and NDCG measuring how
-        accurately $I(v,t)$ ranks top-$K$ super-spreaders prior to cascade
-        inflection.
-  \item \textbf{Temporal burst timing}: NLL of cross-platform burst
-        inter-arrival times ($\mathcal{L}_{\mathrm{Hawkes}}$).
-\end{itemize}
+\paragraph{(1) Engagement magnitude is intrinsically noise-dominated --- a
+negative result.} On log-engagement regression, no model (including ours)
+beats the naive train-mean (MAE 0.825 vs.\ SimCity 0.848). We show this is a
+property of the target, not the models: an \emph{oracle} ridge regressor handed
+a leak-free recent-excitation feature achieves \emph{negative} within-narrative
+residual skill ($-0.107$) and near-random surge-ranking AUC (0.507), because
+next-window branching-process counts carry Poisson-scale variance. We therefore
+argue engagement-magnitude regression is an ill-posed headline metric for
+cascade models, and evaluate timing and transfer instead.
 
-\subsection{Architectural Ablations}
-\label{sec:ablations}
+\paragraph{(2) Cross-platform next-event timing.} Using the conditional
+intensity $\lambda_i(t_k)$ (causal, history strictly before $t_k$) to predict
+which platform fires next: over three seeds, SimCity attains AUC
+$0.610 \pm 0.005$ vs.\ static MHP $0.605 \pm 0.000$ --- above the static
+baseline on every seed, though the margin is not significant at $n{=}3$ seeds
+(Welch $p = 0.23$). Shuffling test timestamps inflates SimCity's Hawkes NLL by
+$15$--$25\times$, confirming genuine temporal-order learning.
 
-\begin{enumerate}[noitemsep]
-  \item \textbf{Centrality substitution}: we report the empirical Precision@$K$
-        degradation when substituting $\mathcal{O}(V^3)$ Betweenness for
-        $\mathcal{O}(1)$ Temporal Degree Centrality, assessing whether the
-        computational gains justify the topological trade-off.
-  \item \textbf{Deffuant smoothness} ($\rho$): sensitivity analysis confirming
-        steady-state opinion clusters are invariant for $\rho > 10^2$
-        (Appendix~B).
-  \item \textbf{InfoNCE negative sampling} ($M$): ablation over
-        $M\in\{10,20,50,100,200\}$ reporting the tradeoff between
-        $\mathcal{L}_{\mathrm{TGN}}$ tightness and wall-clock training time,
-        verifying stabilisation at $M=20$.
-\end{enumerate}
+\paragraph{(3) Narrative transfer detection --- the headline result.} We ask:
+among narratives so far observed on a \emph{single} platform, which will later
+jump platforms? SimCity's per-narrative mean off-diagonal branching mass
+$\sum_{i \ne j} \hat\alpha_{ij}/\hat\gamma_{ij}$ (``bridge score''), computed
+causally from pre-switch events only, ranks 209 test narratives (123 transfer)
+with \textbf{AUC $0.653 \pm 0.005$ over three seeds} (per-seed 0.649/0.658/0.652;
+95\% bootstrap CI $[0.58, 0.73]$; Mann--Whitney $p < 1.1\times10^{-4}$ on every
+seed). The score survives confound controls on all seeds: AUC 0.656--0.662
+within event-count strata and 0.656--0.661 within latent-reach strata, versus
+0.551 for the popularity baseline. Crucially, a
+static MHP has a single global $\alpha$ and \emph{cannot rank narratives at
+all} (AUC 0.5 by construction): per-narrative transfer detection is a
+capability added by the neural parameterisation, not a marginal improvement.
+Interestingly, the learned score does not simply read back the injected latent
+$b_n$ (Spearman $-0.04$); it derives transfer propensity from observed
+temporal history, and retains its discrimination when both popularity and
+reach are controlled.
+
+\subsection{Limitations and Negative Results}
+\label{sec:limitations}
+
+We report three honest limitations. (i) The multi-task objective dilutes the
+Hawkes head: with uniform Kendall weighting the neural model \emph{underperforms}
+the static MHP on timing (AUC 0.576); recovering the advantage requires
+up-weighting the Hawkes task ($10\times$). (ii) On the real HN+GDELT snapshot,
+popularity dominates transfer prediction (AUC 0.648) and the bridge score is
+only marginal after stratification (0.570): the 93/7 platform imbalance and 53
+transfer cases underpower the test. (iii) The timing margin over static MHP,
+while consistent across seeds, is small on synthetic data. Confirming the
+transfer result on a balanced, large-scale real corpus is the primary open
+task; the released accumulating collector is designed for it.
+
+\subsection{Reproducibility}
+All experiments run on CPU. The repository releases the generator, collectors,
+training (\texttt{train.py} with seed and task-weight environment controls),
+and one-command evaluations (\texttt{multiseed\_stats.py},
+\texttt{narrative\_transfer\_eval.py}, \texttt{platform\_prediction\_eval.py},
+\texttt{burst\_ranking\_eval.py}, oracle checks), with all tables regenerable
+from \texttt{results/}.
 
 % =============================================================
 % Bibliography
@@ -749,8 +787,11 @@ $\cP_i$ & Set of nodes on platform $i$ \\
 
 \section*{Appendix B: Deffuant $\rho$ Sensitivity Analysis}
 
-[Sensitivity plots for $\rho \in \{10^0, 10^1, 10^2, 10^3\}$ demonstrating
-invariance of steady-state opinion clusters for $\rho > 10^2$. To be completed
-upon empirical runs.]
+The smooth Deffuant formulation (\cref{eq:deffuant}) recovers the hard-threshold
+model as $\rho \to \infty$; we conjecture steady-state opinion clusters are
+invariant for $\rho > 10^2$ based on the bounded-confidence literature, but a
+systematic sensitivity study over $\rho \in \{10^0, 10^1, 10^2, 10^3\}$ has not
+yet been run and is left as future work. No result in
+\cref{sec:results} depends on the choice of $\rho$.
 
 \end{document}

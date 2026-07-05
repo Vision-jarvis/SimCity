@@ -1,0 +1,11 @@
+{
+  "epochs": 15,
+  "static_gnn_seir": {
+    "virality_mae": 0.9232309435983356,
+    "virality_rmse": 1.1538888774291578
+  },
+  "vanilla_tgn": {
+    "virality_mae": 0.9273247419715785,
+    "virality_rmse": 1.1398412951597734
+  }
+}
