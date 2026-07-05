@@ -1,15 +1,15 @@
 {
   "model": "SimCity (TGN + neural Hawkes + virality head)",
   "epochs": 15,
-  "n_train_events": 5530,
-  "n_test_events": 1668,
+  "n_train_events": 9936,
+  "n_test_events": 1980,
   "test": {
-    "virality_mae": 0.8645787835121155,
-    "virality_rmse": 1.0410562753677368,
-    "hawkes_nll": 0.7442036834028032
+    "virality_mae": 2.2049014568328857,
+    "virality_rmse": 2.4382412433624268,
+    "hawkes_nll": -10.91208107471466
   },
   "naive_mean_baseline": {
-    "virality_mae": 0.8245580196380615,
-    "virality_rmse": 0.9761841297149658
+    "virality_mae": 2.2087819576263428,
+    "virality_rmse": 2.437589168548584
   }
 }

@@ -116,7 +116,7 @@ def _parse_seendate(s):
         return None
 
 
-def fetch_gdelt(keywords, per_query=60, timespan="3d"):
+def fetch_gdelt(keywords, per_query=250, timespan="1w"):
     """Pull recent news articles per keyword (throttled >=6s for GDELT's limit)."""
     seen, rows = set(), []
     for kw in keywords:
@@ -167,7 +167,7 @@ def cluster_narratives(titles, threshold=0.34, max_narr=400):
     return np.array(assign), len(narr_tokens)
 
 
-def build(pages, out, with_gdelt=True):
+def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w"):
     print("Fetching real Hacker News stories (Algolia)...")
     hits = fetch_hn(pages)
     print(f"  fetched {len(hits)} stories")
@@ -186,7 +186,8 @@ def build(pages, out, with_gdelt=True):
     frames = [hn]
     if with_gdelt:
         print("Fetching real GDELT news on HN topics (throttled)...")
-        gd_rows = fetch_gdelt(top_keywords(hn["title"].tolist()))
+        gd_rows = fetch_gdelt(top_keywords(hn["title"].tolist(), k=gdelt_topics),
+                              timespan=gdelt_timespan)
         if gd_rows:
             gd = pd.DataFrame(gd_rows)
             gd["platform"] = PLAT_NEWS
@@ -253,5 +254,8 @@ if __name__ == "__main__":
     ap.add_argument("--pages", type=int, default=4)
     ap.add_argument("--out", default="data/real_events.pkl")
     ap.add_argument("--no-gdelt", action="store_true", help="HN only (skip GDELT)")
+    ap.add_argument("--gdelt-topics", type=int, default=45)
+    ap.add_argument("--gdelt-timespan", default="1w")
     args = ap.parse_args()
-    build(args.pages, args.out, with_gdelt=not args.no_gdelt)
+    build(args.pages, args.out, with_gdelt=not args.no_gdelt,
+          gdelt_topics=args.gdelt_topics, gdelt_timespan=args.gdelt_timespan)

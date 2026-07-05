@@ -1,13 +1,13 @@
 {
-  "n_narratives": 209,
-  "n_transfer": 123,
-  "auc_bridge_score": 0.6494138778597088,
+  "n_narratives": 188,
+  "n_transfer": 71,
+  "auc_bridge_score": 0.6319369206693152,
   "auc_bridge_ci95": [
-    0.5710476641022871,
-    0.7215737630726761
+    0.5326136913938962,
+    0.7266253220153203
   ],
-  "mannwhitney_p_one_sided": 0.00010835935326918514,
-  "auc_popularity_baseline": 0.551474758933636,
-  "auc_bridge_within_count_strata": 0.6557987948148131,
+  "mannwhitney_p_one_sided": 0.001223156501089292,
+  "auc_popularity_baseline": 0.6121343445287107,
+  "auc_bridge_within_count_strata": 0.5797571582492952,
   "auc_static_mhp": 0.5
 }

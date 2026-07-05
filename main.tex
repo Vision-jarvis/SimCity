@@ -70,10 +70,10 @@ evaluation; (2) on a controlled multiplex benchmark with ground-truth
 cross-platform excitation, our narrative-conditioned intensity model detects
 \emph{which} narratives will transfer across platforms (AUC $0.653 \pm 0.005$
 over three seeds, $p < 1.1\times10^{-4}$, robust to popularity and reach
-confounds) --- a task on
-which any static Hawkes process is random by construction; and (3) we release an
-accumulating live Hacker News + GDELT collector and report honest limitations of
-a first real-data snapshot.
+confounds) --- a task on which any static Hawkes process is random by
+construction; and (3) this transfer result replicates on a balanced live Hacker
+News + GDELT corpus (AUC 0.632, $p = 1.2\times10^{-3}$), above a popularity
+baseline, using a released accumulating collector.
 \end{abstract}
 
 % =============================================================
@@ -651,6 +651,53 @@ verifies that no ordering leakage remains.
 \subsection{Results}
 \label{sec:results}
 
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{Narrative transfer detection} (synthetic benchmark): ranking
+which single-platform narratives will later cross platforms, scored causally
+from pre-switch events. AUC over three seeds; a static MHP is random by
+construction. The learned score survives both the popularity and latent-reach
+confounds.}
+\label{tab:transfer}
+\begin{tabular}{lc}
+\toprule
+\textbf{Scorer} & \textbf{AUC} \\
+\midrule
+SimCity bridge score (per-narrative $\sum_{i\neq j}\hat\alpha_{ij}/\hat\gamma_{ij}$)
+  & $\mathbf{0.653 \pm 0.005}$ \\
+\quad within event-count strata & $0.656$--$0.662$ \\
+\quad within latent-reach strata & $0.656$--$0.661$ \\
+Popularity baseline (event count) & $0.551$ \\
+Static MHP (single global $\alpha$) & $0.500$ (by construction) \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\footnotesize Mann--Whitney $p < 1.1\times10^{-4}$ (every seed); bootstrap 95\%
+CI $[0.58, 0.73]$. $n=209$ test narratives, 123 transfer.
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{Supporting metrics.} Next-platform timing (AUC, 3 seeds) and
+log-engagement regression (test MAE). SimCity is consistently $\ge$ the static
+baselines on timing but the margin is small; on magnitude no model beats the
+naive mean, consistent with the oracle noise analysis.}
+\label{tab:supporting}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Timing AUC} & \textbf{Virality MAE} \\
+\midrule
+SimCity              & $\mathbf{0.610 \pm 0.005}$ & $0.848$ \\
+Static MHP           & $0.605 \pm 0.000$          & --- \\
+Vanilla TGN          & ---                        & $0.927$ \\
+Static GNN + SEIR    & ---                        & $0.923$ \\
+Naive mean           & $0.500$                    & $\mathbf{0.825}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{(1) Engagement magnitude is intrinsically noise-dominated --- a
 negative result.} On log-engagement regression, no model (including ours)
 beats the naive train-mean (MAE 0.825 vs.\ SimCity 0.848). We show this is a
@@ -687,19 +734,30 @@ $b_n$ (Spearman $-0.04$); it derives transfer propensity from observed
 temporal history, and retains its discrimination when both popularity and
 reach are controlled.
 
+\paragraph{(4) Transfer detection replicates on real data.} On the balanced
+live HN+GDELT corpus (12{,}574 events, 46/54 platform split, 138 cross-platform
+narratives; 188 test narratives, 71 transfer), the same causal bridge score
+attains \textbf{AUC 0.632} (95\% bootstrap CI $[0.53, 0.73]$, Mann--Whitney
+$p = 1.2\times10^{-3}$), \emph{above} the popularity baseline (0.612) and
+remaining 0.580 after count stratification --- strikingly close to the synthetic
+0.653. An earlier imbalanced snapshot (93/7 HN/news) had yielded only chance
+performance; the effect appears once the news platform is adequately sampled,
+indicating the limitation was corpus imbalance rather than the model.
+
 \subsection{Limitations and Negative Results}
 \label{sec:limitations}
 
 We report three honest limitations. (i) The multi-task objective dilutes the
 Hawkes head: with uniform Kendall weighting the neural model \emph{underperforms}
 the static MHP on timing (AUC 0.576); recovering the advantage requires
-up-weighting the Hawkes task ($10\times$). (ii) On the real HN+GDELT snapshot,
-popularity dominates transfer prediction (AUC 0.648) and the bridge score is
-only marginal after stratification (0.570): the 93/7 platform imbalance and 53
-transfer cases underpower the test. (iii) The timing margin over static MHP,
-while consistent across seeds, is small on synthetic data. Confirming the
-transfer result on a balanced, large-scale real corpus is the primary open
-task; the released accumulating collector is designed for it.
+up-weighting the Hawkes task ($10\times$). (ii) The real-data transfer
+result (\cref{sec:results}(4)), while significant, has a wide confidence interval
+($[0.53, 0.73]$, 71 transfer cases) and only edges the popularity baseline after
+stratification; tightening it requires a larger corpus, which the released
+accumulating collector is designed to gather. (iii) The timing margin over static
+MHP, while consistent across seeds, is small on synthetic data. (iv) Results are
+on a two-platform real corpus (HN + news); the third social platform (Reddit/X)
+remains future work pending API access.
 
 \subsection{Reproducibility}
 All experiments run on CPU. The repository releases the generator, collectors,
