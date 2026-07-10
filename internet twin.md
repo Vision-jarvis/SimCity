@@ -55,6 +55,7 @@ majority of it. Highlights and divergences from the plan below:
 - **MLOps** (`ml/training/`, `ml/registry/`): MLflow tracking + model registry + drift-gated retraining (local-JSON fallback when MLflow absent), nightly `retrain.yml`.
 - Simulation: SEIR-Z-D engine, LangGraph multi-agent runtime (Influencer/Bot/Skeptic/Community/News), scenario presets, and a **counterfactual intervention simulator** (`simulation/intervention.py`).
 - **Cross-platform narrative-transfer detection** (`analysis_tools/narrative_tracker.py`).
+- **Empirical validation suite**: reproducible benchmarks with multi-seed statistics and confound controls, plus a live accumulating HN+GDELT corpus — headline: per-narrative transfer detection AUC 0.653 (synthetic) / 0.632 (real); see `docs/benchmarks.md` and `results/FINDINGS.md`.
 - FastAPI (REST + GraphQL + WebSocket), Next.js frontend (Dashboard, Graph3D, Simulate, Intervention, Trends, Narratives).
 - Infra: Dockerfiles, Terraform (OCI Always-Free) + k3s manifests + Helm, Prometheus/Grafana, Locust load test, 5 Colab notebooks.
 

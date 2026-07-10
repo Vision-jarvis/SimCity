@@ -11,7 +11,7 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{xcolor}
-\usepackage{natbib}
+\usepackage[numbers]{natbib}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
@@ -75,6 +75,80 @@ construction; and (3) this transfer result replicates on a balanced live Hacker
 News + GDELT corpus (AUC 0.632, $p = 1.2\times10^{-3}$), above a popularity
 baseline, using a released accumulating collector.
 \end{abstract}
+
+% =============================================================
+\section{Related Work}
+\label{sec:related}
+% =============================================================
+
+\paragraph{Temporal graph representation learning.}
+Continuous-time dynamic graph models embed evolving interaction streams:
+JODIE~\citep{kumar2019predicting} learns coupled user/item trajectories,
+DyRep~\citep{trivedi2019dyrep} drives embeddings with a two-time-scale point
+process, TGAT~\citep{xu2020tgat} introduces functional time encoding for
+temporal attention, and TGN~\citep{rossi2020temporal} unifies these with a
+memory module, which we adopt as our structural backbone. These models are
+trained for link-level prediction; they contain no population-level infection
+dynamics and no mechanism for platform-to-platform transfer, which is precisely
+the gap SimCity's HMF bridge (\cref{sec:hmf}) and cross-platform Hawkes head
+(\cref{sec:hawkes}) address.
+
+\paragraph{Hawkes processes and neural temporal point processes.}
+Self- and mutually-exciting processes~\citep{hawkes1971spectra} underpin much of
+social-media modelling. Neural parameterisations replace fixed kernels with
+learned dynamics: RMTPP~\citep{du2016rmtpp}, the Neural Hawkes
+Process~\citep{mei2017neural}, and the Transformer Hawkes
+Process~\citep{zuo2020transformer}. Closer to our setting,
+NETRATE~\citep{gomez2011netrate} infers diffusion networks from cascades,
+COEVOLVE~\citep{farajtabar2017coevolve} couples diffusion with network growth,
+and prior work separates endogenous from exogenous
+influence~\citep{myers2012external} --- our GDELT-driven $\mu_i(t)$ follows
+this exogenous/endogenous decomposition.
+Our contribution is orthogonal to kernel expressiveness: we condition the
+\emph{cross-platform excitation matrix itself} on evolving graph and narrative
+state, which is what enables per-narrative transfer ranking
+(\cref{sec:results}) --- a static or globally-parameterised Hawkes model is
+random at that task by construction.
+
+\paragraph{Cascade and popularity prediction.}
+Feature-based and deep models predict cascade size: cascade growth was framed
+as a prediction problem in~\citep{cheng2014cascades},
+SEISMIC~\citep{zhao2015seismic} and Hawkes intensity
+processes~\citep{rizoiu2017hip,kobayashi2016tideh} model retweet dynamics,
+reinforced Poisson processes model item popularity~\citep{shen2014rpp}, and
+DeepCas/DeepHawkes~\citep{li2017deepcas,cao2017deephawkes} learn end-to-end
+representations; community structure also signals virality~\citep{weng2013virality}.
+Our negative result (\cref{sec:results}) complements this line: under
+near-critical branching, next-window \emph{counts} are noise-dominated even for
+an oracle, motivating timing- and transfer-based evaluation instead of raw
+magnitude regression.
+
+\paragraph{Epidemic models on networks.}
+Degree-based mean-field theory characterises epidemic thresholds on
+heterogeneous graphs~\citep{pastor2001epidemic,boguna2002correlated,pastor2015epidemic}.
+We import the degree-correlated HMF closure into a learned setting, using TGN
+embeddings to supply node-level infectivities that are aggregated into
+macroscopic SEIR-Z-D rates --- to our knowledge the first bridge from
+continuous-time graph memory states to compartmental transition rates.
+
+\paragraph{Cross-platform information flow.}
+Empirical work documents inter-platform influence: the ``web
+centipede''~\citep{zannettou2017webcentipede} traces news trajectories across
+communities, coordinated cross-platform disinformation campaigns have been
+analysed in~\citep{wilson2020crossplatform}, platform migrations reshape community
+behaviour~\citep{horta2021migrations}, and false news spreads with distinctive
+dynamics~\citep{vosoughi2018spread}. These studies are measurement-focused;
+SimCity provides the corresponding \emph{predictive} instrument --- a causal,
+per-narrative transfer score evaluated prospectively on live Hacker News +
+GDELT data.
+
+\paragraph{Opinion dynamics.}
+Bounded-confidence models~\citep{deffuant2000mixing,hegselmann2002opinion} and
+their statistical-physics treatments~\citep{castellano2009statistical} evolve
+continuous opinions under confidence thresholds. We contribute a
+Filippov-compliant smooth relaxation (\cref{sec:deffuant}) whose radicalization
+state feeds back into representation learning, coupling behavioural and
+structural dynamics.
 
 % =============================================================
 \section{Information Propagation: Stochastic SEIR-Z-D Model}
@@ -464,6 +538,19 @@ subcritical (fading) behaviour if the spectral radius $\rho(\bm{\Gamma}) < 1$.
 If $\rho(\bm{\Gamma}) \ge 1$, the narrative goes globally viral.
 \end{proposition}
 
+\begin{proof}[Proof sketch]
+For fixed parameters, $\Gamma_{ij} = \int_0^\infty
+\hat{\alpha}_{ij} e^{-\hat{\gamma}_{ij} s}\, ds$ is the expected number of
+platform-$i$ offspring of a platform-$j$ event, so $\bm{\Gamma}$ is the mean
+offspring matrix of the associated multitype branching process; extinction
+(stationarity of the linear Hawkes process) holds iff
+$\rho(\bm{\Gamma}) < 1$~\citep{hawkes1971spectra,bremaud1996stability}. In our
+model $\hat\alpha, \hat\gamma$ are piecewise-constant between events
+(\cref{sec:tractability}), so the criterion applies locally per inter-event
+interval; $\rho(\bm{\Gamma}(t))$ then acts as an instantaneous criticality
+index rather than a global stationarity guarantee.
+\end{proof}
+
 \subsection{Linking $\zeta(t)$ to the Hawkes Process}
 
 The resurgence rate $\zeta(t)$ in the SME (\cref{eq:w4}) is formally defined as
@@ -651,6 +738,18 @@ verifies that no ordering leakage remains.
 \subsection{Results}
 \label{sec:results}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/transfer_auc.pdf}
+\caption{\textbf{Narrative transfer detection AUC}, synthetic benchmark (blue,
+three seeds, bootstrap 95\% CI) vs.\ live HN+GDELT corpus (green, 95\% CI),
+against the popularity baseline and the static MHP, which is random at this
+task by construction. The neural bridge score is significantly above random in
+both regimes and above the popularity baseline; count-stratified values control
+the popularity confound.}
+\label{fig:transfer}
+\end{figure}
+
 \begin{table}[t]
 \centering
 \small
@@ -716,7 +815,8 @@ baseline on every seed, though the margin is not significant at $n{=}3$ seeds
 (Welch $p = 0.23$). Shuffling test timestamps inflates SimCity's Hawkes NLL by
 $15$--$25\times$, confirming genuine temporal-order learning.
 
-\paragraph{(3) Narrative transfer detection --- the headline result.} We ask:
+\paragraph{(3) Narrative transfer detection --- the headline result
+(\cref{fig:transfer}, \cref{tab:transfer}).} We ask:
 among narratives so far observed on a \emph{single} platform, which will later
 jump platforms? SimCity's per-narrative mean off-diagonal branching mass
 $\sum_{i \ne j} \hat\alpha_{ij}/\hat\gamma_{ij}$ (``bridge score''), computed
@@ -771,7 +871,141 @@ from \texttt{results/}.
 % Bibliography
 % =============================================================
 \bibliographystyle{plainnat}
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
+
+\bibitem{hawkes1971spectra}
+Hawkes, A. G. (1971).
+\newblock Spectra of some self-exciting and mutually exciting point processes.
+\newblock \textit{Biometrika}, 58(1), 83--90.
+
+\bibitem{du2016rmtpp}
+Du, N., Dai, H., Trivedi, R., Upadhyay, U., Gomez-Rodriguez, M., \& Song, L. (2016).
+\newblock Recurrent marked temporal point processes: Embedding event history to vector.
+\newblock \textit{KDD}.
+
+\bibitem{mei2017neural}
+Mei, H., \& Eisner, J. (2017).
+\newblock The neural Hawkes process: A neurally self-modulating multivariate point process.
+\newblock \textit{NeurIPS}.
+
+\bibitem{zuo2020transformer}
+Zuo, S., Jiang, H., Li, Z., Zhao, T., \& Zha, H. (2020).
+\newblock Transformer Hawkes process.
+\newblock \textit{ICML}.
+
+\bibitem{gomez2011netrate}
+Gomez-Rodriguez, M., Balduzzi, D., \& Sch{\"o}lkopf, B. (2011).
+\newblock Uncovering the temporal dynamics of diffusion networks.
+\newblock \textit{ICML}.
+
+\bibitem{farajtabar2017coevolve}
+Farajtabar, M., Wang, Y., Gomez-Rodriguez, M., Li, S., Zha, H., \& Song, L. (2017).
+\newblock COEVOLVE: A joint point process model for information diffusion and network evolution.
+\newblock \textit{Journal of Machine Learning Research}, 18.
+
+\bibitem{myers2012external}
+Myers, S. A., Zhu, C., \& Leskovec, J. (2012).
+\newblock Information diffusion and external influence in networks.
+\newblock \textit{KDD}.
+
+\bibitem{cheng2014cascades}
+Cheng, J., Adamic, L., Dow, P. A., Kleinberg, J. M., \& Leskovec, J. (2014).
+\newblock Can cascades be predicted?
+\newblock \textit{WWW}.
+
+\bibitem{zhao2015seismic}
+Zhao, Q., Erdogdu, M. A., He, H. Y., Rajaraman, A., \& Leskovec, J. (2015).
+\newblock SEISMIC: A self-exciting point process model for predicting tweet popularity.
+\newblock \textit{KDD}.
+
+\bibitem{rizoiu2017hip}
+Rizoiu, M.-A., Xie, L., Sanner, S., Cebrian, M., Yu, H., \& Van Hentenryck, P. (2017).
+\newblock Expecting to be HIP: Hawkes intensity processes for social media popularity.
+\newblock \textit{WWW}.
+
+\bibitem{kobayashi2016tideh}
+Kobayashi, R., \& Lambiotte, R. (2016).
+\newblock TiDeH: Time-dependent Hawkes process for predicting retweet dynamics.
+\newblock \textit{ICWSM}.
+
+\bibitem{shen2014rpp}
+Shen, H., Wang, D., Song, C., \& Barab{\'a}si, A.-L. (2014).
+\newblock Modeling and predicting popularity dynamics via reinforced Poisson processes.
+\newblock \textit{AAAI}.
+
+\bibitem{li2017deepcas}
+Li, C., Ma, J., Guo, X., \& Mei, Q. (2017).
+\newblock DeepCas: An end-to-end predictor of information cascades.
+\newblock \textit{WWW}.
+
+\bibitem{cao2017deephawkes}
+Cao, Q., Shen, H., Cen, K., Ouyang, W., \& Cheng, X. (2017).
+\newblock DeepHawkes: Bridging the gap between prediction and understanding of information cascades.
+\newblock \textit{CIKM}.
+
+\bibitem{weng2013virality}
+Weng, L., Menczer, F., \& Ahn, Y.-Y. (2013).
+\newblock Virality prediction and community structure in social networks.
+\newblock \textit{Scientific Reports}, 3, 2522.
+
+\bibitem{xu2020tgat}
+Xu, D., Ruan, C., Korpeoglu, E., Kumar, S., \& Achan, K. (2020).
+\newblock Inductive representation learning on temporal graphs.
+\newblock \textit{ICLR}.
+
+\bibitem{trivedi2019dyrep}
+Trivedi, R., Farajtabar, M., Biswal, P., \& Zha, H. (2019).
+\newblock DyRep: Learning representations over dynamic graphs.
+\newblock \textit{ICLR}.
+
+\bibitem{boguna2002correlated}
+Bogu{\~n}{\'a}, M., \& Pastor-Satorras, R. (2002).
+\newblock Epidemic spreading in correlated complex networks.
+\newblock \textit{Physical Review E}, 66, 047104.
+
+\bibitem{pastor2015epidemic}
+Pastor-Satorras, R., Castellano, C., Van Mieghem, P., \& Vespignani, A. (2015).
+\newblock Epidemic processes in complex networks.
+\newblock \textit{Reviews of Modern Physics}, 87, 925.
+
+\bibitem{zannettou2017webcentipede}
+Zannettou, S., Caulfield, T., De Cristofaro, E., Kourtellis, N., Leontiadis, I.,
+Sirivianos, M., Stringhini, G., \& Blackburn, J. (2017).
+\newblock The web centipede: Understanding how web communities influence each
+  other through the lens of mainstream and alternative news sources.
+\newblock \textit{IMC}.
+
+\bibitem{wilson2020crossplatform}
+Wilson, T., \& Starbird, K. (2020).
+\newblock Cross-platform disinformation campaigns: Lessons learned and next steps.
+\newblock \textit{Harvard Kennedy School Misinformation Review}, 1(1).
+
+\bibitem{horta2021migrations}
+Horta Ribeiro, M., Jhaver, S., Zannettou, S., Blackburn, J., Stringhini, G.,
+De Cristofaro, E., \& West, R. (2021).
+\newblock Do platform migrations compromise content moderation? Evidence from
+  r/The\_Donald and r/Incels.
+\newblock \textit{CSCW}.
+
+\bibitem{vosoughi2018spread}
+Vosoughi, S., Roy, D., \& Aral, S. (2018).
+\newblock The spread of true and false news online.
+\newblock \textit{Science}, 359(6380), 1146--1151.
+
+\bibitem{deffuant2000mixing}
+Deffuant, G., Neau, D., Amblard, F., \& Weisbuch, G. (2000).
+\newblock Mixing beliefs among interacting agents.
+\newblock \textit{Advances in Complex Systems}, 3, 87--98.
+
+\bibitem{hegselmann2002opinion}
+Hegselmann, R., \& Krause, U. (2002).
+\newblock Opinion dynamics and bounded confidence: Models, analysis and simulation.
+\newblock \textit{Journal of Artificial Societies and Social Simulation}, 5(3).
+
+\bibitem{castellano2009statistical}
+Castellano, C., Fortunato, S., \& Loreto, V. (2009).
+\newblock Statistical physics of social dynamics.
+\newblock \textit{Reviews of Modern Physics}, 81, 591.
 
 \bibitem{kendall2018multi}
 Kendall, A., Gal, Y., \& Cipolla, R. (2018).

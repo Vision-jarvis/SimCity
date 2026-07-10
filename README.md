@@ -16,7 +16,12 @@ This repository currently implements the modeling core of that vision: a tempora
 - `run_hawkes_baseline.py` trains a CPU-friendly static Hawkes benchmark without requiring PyTorch Geometric.
 - `analysis_tools/cascade_monitor.py` converts Hawkes residuals into event-level cascade alert scores.
 - `run_cascade_monitor.py` trains the static Hawkes baseline and emits anomaly summaries for held-out stream events.
-- `main.tex` contains the research writeup draft.
+- `main.tex` contains the research paper (theory + empirical validation; see
+  `results/FINDINGS.md` and `docs/benchmarks.md`).
+- `data/build_real_dataset.py` builds an accumulating real HN+GDELT corpus.
+- `narrative_transfer_eval.py`, `multiseed_stats.py`,
+  `platform_prediction_eval.py`, `compute_residual_metrics.py`,
+  `burst_ranking_eval.py`, and `run_benchmarks.py` form the evaluation suite.
 
 ## Features Implemented
 
@@ -106,12 +111,16 @@ python -m pytest tests/test_cascade_monitor.py -q
 python -m py_compile analysis_tools/cascade_monitor.py run_cascade_monitor.py run_hawkes_baseline.py models/hawkes.py models/virality_head.py models/loss.py evaluate.py train.py dry_run.py run_diagnostics.py data/dataset.py
 ```
 
-Current environment caveat: `python dry_run.py` could not be executed here because `torch_geometric` is not installed in this workspace Python environment.
+Caveats:
 
-The committed `data/synthetic_events.pkl` may also need regeneration if your NumPy version cannot unpickle it. Use:
+- torch 2.3.x requires `numpy<2` (pinned in requirements). If you hit
+  `RuntimeError: Numpy is not available` inside torch, run
+  `pip install "numpy<2"`.
+- The committed `data/synthetic_events.pkl` may need regeneration if your
+  NumPy version cannot unpickle it:
 
 ```bash
-python data/synthetic_generator.py --events 10000 --out data/synthetic_events.pkl
+python data/synthetic_generator.py --events 10000 --narratives 320 --out data/synthetic_events.pkl
 ```
 
 ## MLOps & Deployment
@@ -160,10 +169,39 @@ Seven ingesters under `ingestion/sources/`: Reddit, Hacker News, GDELT, RSS, You
 
 Colab-ready notebooks in `notebooks/` cover data exploration, the TGN prototype, virality forecasting, the multi-agent simulation, and narrative tracking.
 
-## Research Notes
+## Empirical Validation & Benchmarks
 
-The Hawkes loss, static baseline, and residual monitor are practical cascade-modeling benchmarks. A full production research pass should next add:
+The repository now carries a full empirical validation suite with reproducible
+results (see [docs/benchmarks.md](docs/benchmarks.md) for the complete guide and
+[results/FINDINGS.md](results/FINDINGS.md) for the experiment-by-experiment
+narrative). Headline findings:
 
+- **Narrative transfer detection (headline, replicated synthetic + real):**
+  SimCity's per-narrative cross-platform excitation ("bridge score") predicts
+  *which* narratives will jump platforms — AUC **0.653 ± 0.005** on the
+  synthetic benchmark (3 seeds, p < 1.1e-4, robust to popularity and reach
+  confounds) and **0.632** (p = 0.0012) on a live HN+GDELT corpus. A static
+  Hawkes process is random at this task *by construction*.
+- **Honest negative result:** raw engagement-magnitude regression is
+  noise-dominated under near-critical cascades — even an oracle handed the true
+  excitation feature has negative residual skill. Timing/transfer metrics are
+  the right evaluation, not MAE.
+- **Real-data collector:** `data/build_real_dataset.py` pulls live Hacker News
+  (Algolia) + GDELT news into the pipeline schema, keyless, and *accumulates*
+  across runs (`data/real_events_raw.pkl`); `scripts/accumulate_real_data.cmd`
+  wraps it for Windows Task Scheduler.
+
+Key knobs: `SIMCITY_DATA`, `SIMCITY_EPOCHS`, `SIMCITY_SEED`,
+`SIMCITY_TGN_W`/`SIMCITY_HAWKES_W`/`SIMCITY_VIRALITY_W` (task-loss weights),
+`SIMCITY_EXC_DIM`. Evaluations: `narrative_transfer_eval.py`,
+`multiseed_stats.py`, `platform_prediction_eval.py`,
+`compute_residual_metrics.py`, `burst_ranking_eval.py`, `run_benchmarks.py`,
+`analysis_tools/oracle_residual_check.py`; figure:
+`scripts/make_results_figure.py`.
+
+Remaining research work:
+
+- Grow the real corpus (daily accumulation) to tighten the real-data CI.
+- Third social platform (Reddit/Bluesky) for the real multiplex once API access
+  is available.
 - Calibration metrics for virality risk thresholds.
-- Real ingestion from Hacker News, Reddit, RSS, and GDELT as outlined in [internet twin.md](./internet%20twin.md).
-- Wiring `train.py` to return final metrics so the MLflow pipeline logs real (not placeholder) numbers.
