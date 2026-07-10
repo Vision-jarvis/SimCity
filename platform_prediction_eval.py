@@ -62,15 +62,18 @@ def train_static_mhp_intensities(data_path, epochs=8):
     model = StaticHawkesBaseline(num_platforms=P)
     opt = torch.optim.Adam(model.parameters(), lr=0.03)
     for _ in range(epochs):
-        model.train(); model.reset_state()
+        model.train()
+        model.reset_state()
         for idx in iter_windows(tr, 512):
             opt.zero_grad()
             loss = model(tensors["t"][idx], tensors["platform"][idx], tensors["gdelt"][idx], update_state=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
-            opt.step(); model.detach_state()
+            opt.step()
+            model.detach_state()
     # Causal test intensities: reset at the test boundary, stream test events.
-    model.eval(); model.reset_state()
+    model.eval()
+    model.reset_state()
     with torch.no_grad():
         mu, alpha, gamma = model.parameters_for_events(tensors["gdelt"][te])
         inten, plat = model.hawkes_loss.event_intensities(

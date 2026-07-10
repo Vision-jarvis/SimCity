@@ -25,14 +25,13 @@ def recent_excitation_features(df):
     df = df.sort_values("t").reset_index(drop=True)
     t = df["t"].to_numpy(float)
     dst = df["dst"].to_numpy(np.int64)
-    plat = df["platform"].to_numpy(np.int64)
     n = len(df)
     feats = np.zeros((n, len(TAUS) * 2), dtype=np.float64)
 
     last_t = {}          # dst -> last event time
     state = {}           # dst -> array[len(TAUS)*2] decayed counts (same, cross interleaved)
     for i in range(n):
-        d, p, ti = dst[i], plat[i], t[i]
+        d, ti = dst[i], t[i]
         s = state.get(d)
         if s is None:
             s = np.zeros(len(TAUS) * 2)

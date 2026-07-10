@@ -240,11 +240,13 @@ def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w"):
     print(f"  users/domains: {num_users} | narratives: {n_narr} | events: {len(df)}")
     print(f"  platform distribution (0=HN, 1=news):\n{df['platform'].value_counts().sort_index()}")
     print(f"  cross-platform narratives (on both HN & news): {cross} / {n_narr}")
-    y = df["log_engagement"].to_numpy(); grand = y.mean()
+    y = df["log_engagement"].to_numpy()
+    grand = y.mean()
     w = b_ = 0.0
     for _, g in df.groupby("dst"):
         yi = g["log_engagement"].to_numpy()
-        w += ((yi - yi.mean()) ** 2).sum(); b_ += len(yi) * (yi.mean() - grand) ** 2
+        w += ((yi - yi.mean()) ** 2).sum()
+        b_ += len(yi) * (yi.mean() - grand) ** 2
     print(f"  within-narrative variance fraction: {w/max(w+b_,1e-9):.3f}")
     print(f"Saved to {out}")
 

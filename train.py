@@ -252,7 +252,8 @@ def train():
 
     # Persist final held-out test metrics so downstream tooling (MLflow pipeline,
     # benchmark aggregation) logs real numbers instead of placeholders.
-    import json, os
+    import json
+    import os
     os.makedirs('results', exist_ok=True)
     naive_train_mean = train_data.y[~train_data.y.isnan()].mean().item()
     naive_test_preds = torch.full_like(test_data.y, naive_train_mean)
