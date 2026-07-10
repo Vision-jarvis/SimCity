@@ -71,9 +71,11 @@ cross-platform excitation, our narrative-conditioned intensity model detects
 \emph{which} narratives will transfer across platforms (AUC $0.653 \pm 0.005$
 over three seeds, $p < 1.1\times10^{-4}$, robust to popularity and reach
 confounds) --- a task on which any static Hawkes process is random by
-construction; and (3) this transfer result replicates on a balanced live Hacker
-News + GDELT corpus (AUC 0.632, $p = 1.2\times10^{-3}$), above a popularity
-baseline, using a released accumulating collector.
+construction; and (3) we release an accumulating live Hacker News + GDELT
+collector and report the real-data transfer test honestly: a favourable seed
+reaches AUC 0.632 ($p = 1.2\times10^{-3}$) but the score is not yet seed-stable
+at the current corpus size ($0.400 \pm 0.204$ over three seeds), leaving
+real-data validation as a precisely characterised open task.
 \end{abstract}
 
 % =============================================================
@@ -741,12 +743,13 @@ verifies that no ordering leakage remains.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/transfer_auc.pdf}
-\caption{\textbf{Narrative transfer detection AUC}, synthetic benchmark (blue,
-three seeds, bootstrap 95\% CI) vs.\ live HN+GDELT corpus (green, 95\% CI),
-against the popularity baseline and the static MHP, which is random at this
-task by construction. The neural bridge score is significantly above random in
-both regimes and above the popularity baseline; count-stratified values control
-the popularity confound.}
+\caption{\textbf{Narrative transfer detection AUC.} Synthetic benchmark (filled
+blue: three-seed mean with bootstrap 95\% CI) vs.\ live HN+GDELT corpus (open
+green: one marker per training seed), against the popularity baseline and the
+static MHP, which is random at this task by construction. On the controlled
+benchmark the bridge score is stable and significantly above random and the
+popularity baseline; on the current real corpus it is \emph{not seed-stable}
+(0.319/0.632/0.248) --- shown per seed rather than averaged away.}
 \label{fig:transfer}
 \end{figure}
 
@@ -834,15 +837,19 @@ $b_n$ (Spearman $-0.04$); it derives transfer propensity from observed
 temporal history, and retains its discrimination when both popularity and
 reach are controlled.
 
-\paragraph{(4) Transfer detection replicates on real data.} On the balanced
-live HN+GDELT corpus (12{,}574 events, 46/54 platform split, 138 cross-platform
-narratives; 188 test narratives, 71 transfer), the same causal bridge score
-attains \textbf{AUC 0.632} (95\% bootstrap CI $[0.53, 0.73]$, Mann--Whitney
-$p = 1.2\times10^{-3}$), \emph{above} the popularity baseline (0.612) and
-remaining 0.580 after count stratification --- strikingly close to the synthetic
-0.653. An earlier imbalanced snapshot (93/7 HN/news) had yielded only chance
-performance; the effect appears once the news platform is adequately sampled,
-indicating the limitation was corpus imbalance rather than the model.
+\paragraph{(4) Transfer detection on real data --- not yet seed-stable.} On
+the balanced live HN+GDELT corpus (12{,}574 events, 46/54 platform split, 138
+cross-platform narratives; 188 test narratives, 71 transfer), a favourable
+training seed attains AUC 0.632 (Mann--Whitney $p = 1.2\times10^{-3}$, above
+the popularity baseline of 0.612) --- but across three seeds the score is
+\textbf{0.400 $\pm$ 0.204} (per-seed 0.319/0.632/0.248), in stark contrast to
+the synthetic benchmark's $\pm 0.005$ stability. We report this plainly: at the
+current corpus size (71 transfer cases) the real-data bridge score is dominated
+by training-seed variance, and the transfer capability is \emph{established
+only on the controlled benchmark}. The corpus imbalance we corrected (a 93/7
+snapshot yields chance performance for every seed) is necessary but evidently
+not sufficient; accumulating a substantially larger corpus --- the released
+collector's purpose --- is the identified path to a decisive real-data test.
 
 \subsection{Limitations and Negative Results}
 \label{sec:limitations}
@@ -851,10 +858,11 @@ We report three honest limitations. (i) The multi-task objective dilutes the
 Hawkes head: with uniform Kendall weighting the neural model \emph{underperforms}
 the static MHP on timing (AUC 0.576); recovering the advantage requires
 up-weighting the Hawkes task ($10\times$). (ii) The real-data transfer
-result (\cref{sec:results}(4)), while significant, has a wide confidence interval
-($[0.53, 0.73]$, 71 transfer cases) and only edges the popularity baseline after
-stratification; tightening it requires a larger corpus, which the released
-accumulating collector is designed to gather. (iii) The timing margin over static
+result (\cref{sec:results}(4)) is not seed-stable at the current corpus size
+($0.400 \pm 0.204$ over three seeds; a single seed reaches 0.632): the headline
+transfer capability is established on the controlled benchmark only, and the
+real-data test remains open pending a larger corpus from the released
+accumulating collector. (iii) The timing margin over static
 MHP, while consistent across seeds, is small on synthetic data. (iv) Results are
 on a two-platform real corpus (HN + news); the third social platform (Reddit/X)
 remains future work pending API access.

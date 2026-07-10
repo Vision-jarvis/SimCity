@@ -176,12 +176,14 @@ results (see [docs/benchmarks.md](docs/benchmarks.md) for the complete guide and
 [results/FINDINGS.md](results/FINDINGS.md) for the experiment-by-experiment
 narrative). Headline findings:
 
-- **Narrative transfer detection (headline, replicated synthetic + real):**
-  SimCity's per-narrative cross-platform excitation ("bridge score") predicts
-  *which* narratives will jump platforms — AUC **0.653 ± 0.005** on the
-  synthetic benchmark (3 seeds, p < 1.1e-4, robust to popularity and reach
-  confounds) and **0.632** (p = 0.0012) on a live HN+GDELT corpus. A static
-  Hawkes process is random at this task *by construction*.
+- **Narrative transfer detection (headline, established on the controlled
+  benchmark):** SimCity's per-narrative cross-platform excitation ("bridge
+  score") predicts *which* narratives will jump platforms — AUC
+  **0.653 ± 0.005** (3 seeds, p < 1.1e-4, robust to popularity and reach
+  confounds). A static Hawkes process is random at this task *by construction*.
+  On the live HN+GDELT corpus the score is **not yet seed-stable**
+  (0.400 ± 0.204; one favourable seed reaches 0.632) — the real-data test is an
+  open task that the accumulating collector is designed to power.
 - **Honest negative result:** raw engagement-magnitude regression is
   noise-dominated under near-critical cascades — even an oracle handed the true
   excitation feature has negative residual skill. Timing/transfer metrics are

@@ -12,8 +12,9 @@ This document is the reproduction guide for every number in `main.tex` and
    narratives.
    - Synthetic benchmark: AUC **0.653 ± 0.005** (3 seeds, Mann-Whitney
      p < 1.1e-4, survives popularity- and reach-stratification).
-   - Live HN+GDELT corpus: AUC **0.632** (p = 0.0012, above the popularity
-     baseline 0.612).
+   - Live HN+GDELT corpus: **not yet seed-stable** — 0.400 ± 0.204 over 3 seeds
+     (one favourable seed reaches 0.632). The real-data test is open pending a
+     larger corpus; the daily accumulation task grows it.
 2. **Honest negative result:** raw engagement-magnitude regression is
    noise-dominated under near-critical cascade dynamics. Even an *oracle*
    handed the true excitation feature has negative residual skill (−0.107) and

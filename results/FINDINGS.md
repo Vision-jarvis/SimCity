@@ -35,25 +35,27 @@ headline claim (on synthetic data):** narrative-conditioned neural excitation
 identifies *which* narratives will cross platforms (AUC ≈ 0.655), not merely when
 the next event fires.
 
-**3b. Same transfer test on REAL HN+GDELT — REPLICATES on a balanced corpus.**
-After rebalancing the collector (heavier GDELT: 45 topics/1-week) the corpus grew
-to 12,574 events at 46/54 HN/news with 138 cross-platform narratives. Transfer
-test: 188 test narratives, 71 transfer.
+**3b. Same transfer test on REAL HN+GDELT — NOT seed-stable (single-seed 0.632
+was a favourable seed).** After rebalancing the collector (45 GDELT topics /
+1-week) the corpus grew to 12,574 events at 46/54 HN/news with 138
+cross-platform narratives (188 test narratives, 71 transfer). Seed 2 reached
+AUC 0.632 (p=0.0012, above popularity 0.612) and was briefly reported as a
+replication — but the mandatory multi-seed check refuted that:
 
-| Scorer | AUC (balanced real) | vs. earlier imbalanced (93/7) |
-|---|---|---|
-| **SimCity bridge score** | **0.632** (CI [0.53, 0.73], p=0.0012) | 0.426 (below random) |
-| — within count strata | 0.580 | 0.570 |
-| Popularity baseline | 0.612 | 0.648 |
-| Static MHP | 0.500 | 0.500 |
+| Real corpus (balanced) | seed 1 | seed 2 | seed 3 | mean ± std |
+|---|---|---|---|---|
+| SimCity bridge score | 0.319 | 0.632 | 0.248 | **0.400 ± 0.204** |
+| — within count strata | 0.167 | 0.580 | 0.199 | unstable |
+| Popularity baseline | 0.612 | 0.612 | 0.612 | deterministic |
 
-**The synthetic result now replicates on real data:** SimCity's bridge score
-reaches AUC 0.632 (statistically significant, p=0.0012), **above the popularity
-baseline (0.612)**, and remains 0.580 after count stratification. Strikingly
-close to the synthetic 0.653. The earlier "weak/inconclusive" finding was a
-platform-imbalance artifact (7% news starved the transfer signal), not a model
-limitation — fixed by pulling more news. Larger corpora (the daily accumulation
-task) should tighten the CI further.
+Contrast with the synthetic benchmark's 0.653 ± **0.005**. **Honest status:**
+the transfer capability is established on the controlled benchmark only. On
+real data, with 71 transfer cases and a weaker signal, the learned bridge score
+is dominated by training-seed variance. Rebalancing the corpus was necessary
+(the 93/7 snapshot gave chance for every seed) but not sufficient. The decisive
+real-data test needs a substantially larger corpus — the daily accumulation
+task exists for exactly this. Lesson reinforced twice this project: **never
+headline a single-seed result.**
 
 ## THE POSITIVE RESULT (the paper's viable contribution)
 
