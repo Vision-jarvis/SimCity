@@ -86,16 +86,40 @@ class ModelRegistry:
     # ------------------------------------------------------------------ #
     def _try_init_mlflow(self) -> bool:
         try:
+            # Fail fast instead of minutes of HTTP retries when the tracking
+            # server is unreachable (e.g. CI has no MLflow server running).
+            os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "5")
+            os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
+
             import mlflow
             from mlflow.tracking import MlflowClient
 
             mlflow.set_tracking_uri(self.tracking_uri)
+            client = MlflowClient(tracking_uri=self.tracking_uri)
+
+            # MLflow 3.x removed registry stages (transition_model_version_stage);
+            # this registry's promote/list logic depends on them.
+            if not hasattr(client, "transition_model_version_stage"):
+                logger.warning(
+                    "MLflow %s lacks registry stages (removed in 3.x); "
+                    "falling back to local registry",
+                    getattr(mlflow, "__version__", "?"),
+                )
+                return False
+
+            # Reachability probe: client construction is lazy, so make one
+            # cheap real call before committing to the MLflow backend.
+            client.search_registered_models(max_results=1)
+
             self._mlflow = mlflow
-            self._client = MlflowClient(tracking_uri=self.tracking_uri)
+            self._client = client
             logger.info("ModelRegistry using MLflow at %s", self.tracking_uri)
             return True
         except Exception as exc:  # pragma: no cover - depends on environment
-            logger.debug("MLflow init failed (%s); falling back to local", exc)
+            logger.warning(
+                "MLflow unavailable at %s (%s); falling back to local registry",
+                self.tracking_uri, exc.__class__.__name__,
+            )
             return False
 
     @property

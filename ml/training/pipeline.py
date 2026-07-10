@@ -55,6 +55,11 @@ class ExperimentTracker:
 
     def _try_init(self) -> bool:
         try:
+            # Fail fast when the tracking server is unreachable instead of
+            # sitting through minutes of default HTTP retries (e.g. in CI).
+            os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "5")
+            os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
+
             import mlflow
 
             mlflow.set_tracking_uri(self.tracking_uri)

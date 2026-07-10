@@ -24,11 +24,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas scikit-learn
-          # mlflow is optional; the pipeline falls back to a local store without it.
-          pip install mlflow || echo "mlflow unavailable; using local registry"
+          pip install "numpy>=1.26,<2" pandas scikit-learn
+          # NOTE: mlflow is intentionally NOT installed. CI has no MLflow
+          # tracking server, so this job must exercise the local-JSON registry
+          # fallback. (Previously `pip install mlflow` pulled mlflow 3.x, whose
+          # client then spent ~5 minutes retrying http://localhost:5000 before
+          # crashing the run.)
 
       - name: Run drift check + conditional retrain (demo trainer)
+        env:
+          # Belt-and-braces: if mlflow is ever present, fail fast instead of
+          # sitting through minutes of HTTP retries against a dead server.
+          MLFLOW_HTTP_REQUEST_TIMEOUT: "5"
+          MLFLOW_HTTP_REQUEST_MAX_RETRIES: "1"
         run: |
           # Replace --demo with a real PyG-backed run once GPU/data are wired.
           python run_training_pipeline.py schedule \
