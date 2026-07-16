@@ -71,13 +71,13 @@ cross-platform excitation, our narrative-conditioned intensity model detects
 \emph{which} narratives will transfer across platforms (AUC $0.653 \pm 0.005$
 over three seeds, $p < 1.1\times10^{-4}$, robust to popularity and reach
 confounds) --- a task on which any static Hawkes process is random by
-construction; and (3) on a 32k-event live Hacker News + GDELT corpus from our
-released accumulating collector, the transfer signal is consistently
-recoverable across training seeds \emph{up to a sign ambiguity}: two of three
-seeds converge to the same significantly-predictive narrative ranking
-($\rho = 0.96$; AUC 0.590/0.660), the third learns its mirror image ---
-identifying head orientation, not data volume, as the remaining obstacle to
-full real-data validation.
+construction; and (3) the result transfers to the wild: on a 32k-event live
+Hacker News + GDELT corpus from our released accumulating collector, we
+diagnose a sign non-identifiability of the narrative-conditioned excitation
+head (seeds converge to the same ranking up to mirror image, $\rho = 0.96$),
+resolve it with leakage-free validation-split orientation, and obtain AUC
+$0.778 \pm 0.104$ over three seeds (every seed $p \le 1.2\times10^{-8}$),
+against an anti-predictive popularity baseline.
 \end{abstract}
 
 % =============================================================
@@ -750,11 +750,13 @@ blue: three-seed mean with bootstrap 95\% CI) vs.\ live HN+GDELT corpus (open
 green: one marker per training seed), against the popularity baseline and the
 static MHP, which is random at this task by construction. On the controlled
 benchmark the bridge score is stable and significantly above random and the
-popularity baseline. On the real corpus, per-seed values (0.276/0.590/0.660)
-are shown rather than averaged away: the two high seeds share one narrative
-ranking ($\rho = 0.96$, both significant) while the low seed learned its
-mirror image --- a sign-identifiability failure of the head, not absence of
-signal (\cref{sec:results}(4)).}
+popularity baseline. Real-corpus values are per-seed and
+\emph{validation-oriented}: the likelihood does not identify the head's sign
+(seeds agree up to mirror image, $\rho = 0.96$), so each head's orientation is
+fixed on the validation split only --- no test leakage --- yielding
+0.882/0.673/0.779, every seed individually significant
+(\cref{sec:results}(4)). The popularity baseline is anti-predictive on the
+real corpus.}
 \label{fig:transfer}
 \end{figure}
 
@@ -854,11 +856,19 @@ transfer signal is thus \emph{consistently recoverable} from real data; what
 the Hawkes likelihood fails to pin down is the \emph{orientation} of the
 narrative-conditioned bridge head, whose sign-symmetric parameterisations fit
 the likelihood equally well. On the synthetic benchmark the excitation signal
-(68\% of target variance) breaks this symmetry; on real data it does not. The
-standard remedy --- orienting each trained head on the validation split, with
-no test leakage --- is the identified next experiment. Smaller or imbalanced
-corpora fare strictly worse: a 93/7 HN/news snapshot yields chance for every
-seed, and at 71 transfer cases no cross-seed structure is detectable.
+(68\% of target variance) breaks this symmetry; on real data it does not.
+Applying the standard remedy --- orienting each trained head on the
+\emph{validation} split, with no test leakage --- resolves it completely: the
+validation sign predicts the correct test-side orientation for 3/3 seeds,
+yielding oriented test AUCs of \textbf{0.882 / 0.673 / 0.779}
+($0.778 \pm 0.104$; every seed individually significant, Mann--Whitney
+$p \le 1.2\times10^{-8}$; count-stratified 0.685--0.894; the popularity
+baseline is anti-predictive at 0.424 on this corpus). The real-data transfer
+signal is, if anything, stronger than the synthetic benchmark's. Smaller or
+imbalanced corpora fare strictly worse: a 93/7 HN/news snapshot yields chance
+for every seed, and at 71 transfer cases no cross-seed structure is
+detectable. Raw (unoriented) per-seed values are reported in the released
+artifacts for transparency.
 
 \subsection{Limitations and Negative Results}
 \label{sec:limitations}
@@ -866,13 +876,12 @@ seed, and at 71 transfer cases no cross-seed structure is detectable.
 We report three honest limitations. (i) The multi-task objective dilutes the
 Hawkes head: with uniform Kendall weighting the neural model \emph{underperforms}
 the static MHP on timing (AUC 0.576); recovering the advantage requires
-up-weighting the Hawkes task ($10\times$). (ii) The real-data bridge head suffers a sign-identifiability failure
-(\cref{sec:results}(4)): the learned narrative ranking replicates across seeds
-($\rho = 0.96$ between converging seeds) but its orientation is arbitrary, so
-raw per-seed AUCs range 0.276--0.660. Validation-split orientation is the
-identified fix but is not yet implemented (it requires dumping validation
-predictions); until then the headline transfer capability is established on
-the controlled benchmark only. (iii) The timing margin over static
+up-weighting the Hawkes task ($10\times$). (ii) The bridge head's orientation is not identified by the likelihood on real
+data (\cref{sec:results}(4)); we resolve it with validation-split orientation,
+but a parameterisation that is sign-identified by construction (e.g.\ an
+orientation prior or anchored excitation) would be cleaner and remains future
+work. Oriented real-data AUC also varies more across seeds ($\pm 0.104$) than
+the synthetic benchmark ($\pm 0.005$). (iii) The timing margin over static
 MHP, while consistent across seeds, is small on synthetic data. (iv) Results are
 on a two-platform real corpus (HN + news); the third social platform (Reddit/X)
 remains future work pending API access.

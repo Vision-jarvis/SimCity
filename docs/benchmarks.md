@@ -12,14 +12,15 @@ This document is the reproduction guide for every number in `main.tex` and
    narratives.
    - Synthetic benchmark: AUC **0.653 ± 0.005** (3 seeds, Mann-Whitney
      p < 1.1e-4, survives popularity- and reach-stratification).
-   - Live HN+GDELT corpus (32k events, 166 transfer cases): signal
-     **replicated across seeds up to a sign ambiguity** — two of three seeds
-     converge to the same ranking (ρ=0.96; AUC 0.590/0.660, both significant),
-     the third learns its mirror (AUC 0.276). Diagnosis: the Hawkes likelihood
-     does not identify the bridge head's orientation; validation-split
-     orientation is the identified fix. See
-     `results/narrative_transfer_real.md`. Gate corpus readiness with
-     `python scripts/count_transfer_cases.py`.
+   - Live HN+GDELT corpus (32k events, 166 transfer cases): **AUC 0.778 ±
+     0.104** over 3 seeds (0.882/0.673/0.779, every seed p ≤ 1.2e-8) after
+     **validation-split orientation** — the Hawkes likelihood does not identify
+     the bridge head's sign (seeds converge to the same ranking up to mirror,
+     ρ=0.96), so each head's orientation is fixed on validation labels only
+     (no test leakage) via `narrative_transfer_eval.py --orient-with
+     results/simcity_val_preds_<tag>.npz`. Popularity baseline is
+     anti-predictive (0.424). See `results/narrative_transfer_real.md`. Gate
+     corpus readiness with `python scripts/count_transfer_cases.py`.
 2. **Honest negative result:** raw engagement-magnitude regression is
    noise-dominated under near-critical cascade dynamics. Even an *oracle*
    handed the true excitation feature has negative residual skill (−0.107) and

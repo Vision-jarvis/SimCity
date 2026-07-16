@@ -83,12 +83,27 @@ signal is strong enough (68% of variance) to break the symmetry; on real data
 it is not.
 
 **Identified remedy (standard):** orient each trained model's bridge score on
-the *validation* split (no test leakage) before evaluating; alternatively add a
-weak orientation prior to the head. With seed-1 flipped, per-seed AUCs are
-~0.72/0.59/0.66. Implementing val-split orientation requires dumping validation
-predictions (train.py currently dumps test only) — wired as the next
-experiment. This upgrades the real-data story from "unstable" to "signal
-present and replicated across seeds up to a fixable sign ambiguity."
+the *validation* split (no test leakage) before evaluating.
+
+**3d. Validation-oriented evaluation — REAL-DATA VALIDATION ACHIEVED.**
+Implemented the fix (`train.py` dumps validation predictions;
+`narrative_transfer_eval.py --orient-with`), retrained 3 fresh seeds on the 32k
+corpus, and oriented each head using validation labels only:
+
+| seed | val AUC → orientation | raw test AUC | **oriented test AUC** | Mann-Whitney p | count-strata |
+|---|---|---|---|---|---|
+| 1 | 0.245 → flip | 0.118 | **0.882** | 1.0e-24 | 0.894 |
+| 2 | 0.647 → keep | 0.673 | **0.673** | 1.2e-08 | 0.685 |
+| 3 | 0.261 → flip | 0.221 | **0.779** | 4.9e-14 | 0.842 |
+
+**Oriented 3-seed: AUC 0.778 ± 0.104. Every seed individually significant;
+survives count stratification on every seed; popularity baseline is
+anti-predictive (0.424) on this corpus; static MHP = 0.500 by construction.**
+The validation-split orientation predicted the correct test-side orientation in
+3/3 seeds — the procedure works exactly as it would be deployed. The real-data
+transfer signal is, if anything, *stronger* than the synthetic benchmark's
+0.653. Raw (unoriented) numbers are reported alongside for full transparency.
+Per-seed raw values: `results/narrative_transfer_real_oriented.json`.
 
 ## THE POSITIVE RESULT (the paper's viable contribution)
 

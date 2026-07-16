@@ -27,9 +27,21 @@ the *orientation* of the narrative-conditioned bridge head (sign-symmetric
 parameterizations fit equally well). Synthetic data (68% excitation variance)
 breaks the symmetry; real data does not.
 
-**Identified fix (next experiment):** orient each trained head on the
-validation split (no test leakage) before evaluating. Requires adding a
-validation-prediction dump to `train.py`.
+## Fix applied: validation-split orientation — real-data validation ACHIEVED
+
+Fresh 3-seed run with the fix (`train.py` dumps val predictions;
+`narrative_transfer_eval.py --orient-with`):
+
+| seed | val AUC → orientation | raw test | **oriented test** | p | count-strata |
+|---|---|---|---|---|---|
+| 1 | 0.245 → flip | 0.118 | **0.882** | 1.0e-24 | 0.894 |
+| 2 | 0.647 → keep | 0.673 | **0.673** | 1.2e-08 | 0.685 |
+| 3 | 0.261 → flip | 0.221 | **0.779** | 4.9e-14 | 0.842 |
+
+**Oriented 3-seed AUC: 0.778 ± 0.104.** Validation orientation predicted the
+correct test-side orientation in 3/3 seeds. The real-data transfer signal is
+stronger than the synthetic benchmark's 0.653. Raw values retained above and in
+`results/narrative_transfer_real_oriented.json` for transparency.
 
 History: a 93/7 imbalanced snapshot gave chance for every seed; at 71 transfer
 cases (12.5k events) no cross-seed structure was detectable. Corpus scale

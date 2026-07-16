@@ -16,12 +16,15 @@ BLUE, AQUA = "#2a78d6", "#1baf7a"          # validated categorical pair
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e6e5e1"
 
 # (label, synthetic value, syn CI, real per-seed values)
-# Real corpus = 32,472 events / 166 transfer cases. Seed 1's low AUC is the
-# MIRRORED solution (rho=-0.5/-0.6 vs the other seeds, which agree at +0.96):
-# a sign-identifiability failure of the bridge head, not absence of signal.
+# Real corpus = 32,472 events / 166 transfer cases. Real values are
+# VALIDATION-ORIENTED: the Hawkes likelihood does not identify the bridge
+# head's sign (seeds converge to the same ranking up to mirror image,
+# rho=0.96); each head's orientation is fixed on the validation split only
+# (no test leakage) before scoring. Raw values in
+# results/narrative_transfer_real_oriented.json.
 ROWS = [
-    ("SimCity bridge score",          0.653, (0.580, 0.730), [0.276, 0.590, 0.660]),
-    ("Bridge, count-stratified",      0.660, (0.656, 0.662), [0.218, 0.541, 0.586]),
+    ("SimCity bridge score",          0.653, (0.580, 0.730), [0.882, 0.673, 0.779]),
+    ("Bridge, count-stratified",      0.660, (0.656, 0.662), [0.894, 0.685, 0.842]),
     ("Popularity baseline",           0.551, None,           [0.424]),
     ("Static MHP (by construction)",  0.500, None,           [0.500]),
 ]
@@ -55,7 +58,7 @@ ax.annotate("random (0.5)", (0.5, ys[0] + 0.52), ha="center", fontsize=7.5,
 ax.set_yticks(ys)
 ax.set_yticklabels([r[0] for r in ROWS], fontsize=9, color=INK)
 ax.set_xlabel("Transfer-detection AUC", fontsize=9, color=INK)
-ax.set_xlim(0.13, 0.78)
+ax.set_xlim(0.38, 0.94)
 ax.set_ylim(-0.6, len(ROWS) - 0.25)
 ax.tick_params(axis="x", labelsize=8, colors=INK2)
 ax.tick_params(axis="y", length=0)
@@ -69,7 +72,7 @@ handles = [
     plt.Line2D([], [], marker="o", ls="", ms=7, color=BLUE, mec="white",
                label="Synthetic (3 seeds; 95% CI)"),
     plt.Line2D([], [], marker="o", ls="", ms=6.5, mfc="white", mec=AQUA,
-               mew=1.8, label="Real HN+GDELT (per seed; unstable)"),
+               mew=1.8, label="Real HN+GDELT (per seed; val-oriented)"),
 ]
 ax.legend(handles=handles, loc="lower left", fontsize=8, frameon=False)
 

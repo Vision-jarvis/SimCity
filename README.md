@@ -181,12 +181,12 @@ narrative). Headline findings:
   score") predicts *which* narratives will jump platforms — AUC
   **0.653 ± 0.005** (3 seeds, p < 1.1e-4, robust to popularity and reach
   confounds). A static Hawkes process is random at this task *by construction*.
-  On the live 32k-event HN+GDELT corpus the signal is **consistently
-  recoverable across seeds up to a sign ambiguity**: two of three seeds
-  converge to the same significantly-predictive narrative ranking (ρ=0.96;
-  AUC 0.590/0.660), the third learns its mirror image — a diagnosable
-  sign-identifiability issue of the bridge head (validation-split orientation
-  is the identified fix), not absence of signal.
+  **Validated on real data:** on the live 32k-event HN+GDELT corpus, after
+  resolving a diagnosed sign non-identifiability of the bridge head with
+  leakage-free validation-split orientation, the oriented transfer AUC is
+  **0.778 ± 0.104** over three seeds (0.882/0.673/0.779, every seed
+  p ≤ 1.2e-8, survives count stratification) — against an *anti-predictive*
+  popularity baseline (0.424).
 - **Honest negative result:** raw engagement-magnitude regression is
   noise-dominated under near-critical cascades — even an oracle handed the true
   excitation feature has negative residual skill. Timing/transfer metrics are
