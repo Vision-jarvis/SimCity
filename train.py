@@ -242,6 +242,29 @@ def train():
     import os as _os2
     _os2.makedirs('results', exist_ok=True)
     _tag = _os2.environ.get('SIMCITY_TAG', '')
+
+    # Validation-prediction dump: used to orient the bridge head's sign without
+    # touching the test set (the Hawkes likelihood does not identify the
+    # orientation of the narrative-conditioned excitation head).
+    print("\n--- Validation Prediction Dump (for head orientation) ---")
+    tgn.reset_memory()
+    neighbor_loader.reset_state()
+    hawkes_loss_fn.reset_state()
+    influence_scorer.reset_state()
+    _val_preds_path = f'results/simcity_val_preds{("_" + _tag) if _tag else ""}.npz'
+    evaluate_model(
+        tgn, pooling, virality_head, deffuant, influence_scorer, hmf_bridge, val_loader, neighbor_loader,
+        num_nodes, num_platforms, raw_msg_dim, device, hawkes_loss_fn,
+        save_preds_path=_val_preds_path
+    )
+
+    # Reset again so the test evaluation keeps the exact protocol of previous
+    # runs (cold start at the test boundary; reset-guard enforced).
+    tgn.reset_memory()
+    neighbor_loader.reset_state()
+    hawkes_loss_fn.reset_state()
+    influence_scorer.reset_state()
+
     _preds_path = f'results/simcity_test_preds{("_" + _tag) if _tag else ""}.npz'
     test_metrics = evaluate_model(
         tgn, pooling, virality_head, deffuant, influence_scorer, hmf_bridge, test_loader, neighbor_loader,

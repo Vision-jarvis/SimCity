@@ -74,6 +74,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--preds", default="results/simcity_test_preds.npz")
     ap.add_argument("--out", default="results/narrative_transfer.md")
+    ap.add_argument("--orient-with", default=None, metavar="VAL_NPZ",
+                    help="Validation-prediction dump used to fix the bridge "
+                         "head's sign (the Hawkes likelihood does not identify "
+                         "its orientation). No test leakage: the sign is chosen "
+                         "from validation labels only.")
     args = ap.parse_args()
 
     d = np.load(args.preds)
@@ -84,6 +89,20 @@ def main():
     labels = np.array([r["label"] for r in rows])
     bridge = np.array([r["bridge_score"] for r in rows])
     counts = np.array([r["n_pre_events"] for r in rows], dtype=float)
+
+    orientation = 1.0
+    if args.orient_with:
+        vd = np.load(args.orient_with)
+        vrows = build_table(vd)
+        vlab = np.array([r["label"] for r in vrows])
+        vsc = np.array([r["bridge_score"] for r in vrows])
+        if 0 < vlab.sum() < len(vlab):
+            val_auc = roc_auc_score(vlab, vsc)
+            orientation = 1.0 if val_auc >= 0.5 else -1.0
+            print(f"[orient] val AUC = {val_auc:.3f} -> orientation {orientation:+.0f}")
+            bridge = orientation * bridge
+        else:
+            print("[orient] degenerate validation labels; keeping raw orientation")
 
     n, pos = len(rows), int(labels.sum())
     if pos == 0 or pos == n:
@@ -106,6 +125,7 @@ def main():
 
     res = {
         "n_narratives": n, "n_transfer": pos,
+        "orientation": orientation,
         "auc_bridge_score": auc_model,
         "auc_bridge_ci95": [ci_lo, ci_hi],
         "mannwhitney_p_one_sided": float(p_mw),
