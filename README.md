@@ -16,8 +16,12 @@ This repository currently implements the modeling core of that vision: a tempora
 - `run_hawkes_baseline.py` trains a CPU-friendly static Hawkes benchmark without requiring PyTorch Geometric.
 - `analysis_tools/cascade_monitor.py` converts Hawkes residuals into event-level cascade alert scores.
 - `run_cascade_monitor.py` trains the static Hawkes baseline and emits anomaly summaries for held-out stream events.
-- `main.tex` contains the research paper (theory + empirical validation; see
-  `results/FINDINGS.md` and `docs/benchmarks.md`).
+- `main.tex` contains the research paper in **ACL format** (theory + empirical
+  validation; see `results/FINDINGS.md` and `docs/benchmarks.md`). Compile with
+  `tectonic main.tex`, or upload `main.tex` + `references.bib` + `acl.sty` +
+  `acl_natbib.bst` + `figures/` to Overleaf (pdfLaTeX). Switch the
+  `\usepackage[preprint]{acl}` option to `review` for anonymous submission or
+  `final` for camera-ready. A compiled `main.pdf` is checked in.
 - `data/build_real_dataset.py` builds an accumulating real HN+GDELT corpus.
 - `narrative_transfer_eval.py`, `multiseed_stats.py`,
   `platform_prediction_eval.py`, `compute_residual_metrics.py`,

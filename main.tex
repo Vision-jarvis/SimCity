@@ -1,19 +1,26 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt]{article}
 
-% --- Packages ---
-\usepackage[margin=1in]{geometry}
+% --- *ACL style (change "preprint" to "review" for anonymous submission,
+%     or "final" for camera-ready). acl.sty loads geometry, natbib
+%     (author-year), caption, and hyperref itself. ---
+\usepackage[preprint]{acl}
+
+% --- Standard ACL template packages ---
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+
+% --- Paper-specific packages ---
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathtools}
 \usepackage{bm}
 \usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{cleveref}
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{xcolor}
-\usepackage[numbers]{natbib}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
+\usepackage{cleveref} % must load after hyperref (loaded by acl.sty)
 
 % --- Theorem Environments ---
 \newtheorem{proposition}{Proposition}
@@ -38,12 +45,11 @@
 \newcommand{\Rad}{\text{Radicalization}}
 
 % -------------------------------------------------------
-\title{%
-  \textbf{SimCity: A Unified Neural-Epidemiological Architecture} \\
-  \large for Modelling Viral Information Dynamics on Multiplex Internet Graphs
-}
-\author{[Author Names]}
-\date{}
+\title{SimCity: A Unified Neural-Epidemiological Architecture for Modelling
+  Viral Information Dynamics on Multiplex Internet Graphs}
+\author{Anonymous Author(s) \\
+  Affiliation \\
+  \texttt{email@example.org}}
 % -------------------------------------------------------
 
 \begin{document}
@@ -258,17 +264,17 @@ the Hawkes decay parameter $\hat{\gamma}_{ij}$ introduced in \cref{sec:hawkes}.
 
 The time evolution of the joint probability distribution $P(\bn, t)$ is governed
 by:
-\begin{equation}
+\begin{multline}
   \frac{dP(\bn, t)}{dt}
   \;=\;
   \sum_{k=1}^{5}
   \Bigl[
-    W_k(\bn - \br_k)\,P(\bn - \br_k,\, t)
+    W_k(\bn - \br_k)\,P(\bn - \br_k,\, t) \\
     \;-\;
     W_k(\bn)\,P(\bn,\, t)
   \Bigr].
   \label{eq:master}
-\end{equation}
+\end{multline}
 This formulation fully specifies the Markov process: each term represents
 probability \emph{flowing into} state $\bn$ from $\bn - \br_k$ minus probability
 \emph{leaving} $\bn$ via transition $k$. Taking expectations over $P(\bn, t)$
@@ -365,19 +371,19 @@ Hawkes infectivity MLPs, we use \textbf{Influence-Weighted Attention Pooling}.
 Simple mean pooling would wash out super-spreader signals in heavy-tailed graphs;
 instead, we weight by the dynamic influence score $I(v,t)$
 (defined in \cref{sec:influence}):
-\begin{equation}
-  \hv_{\cP_i}(t) \;=\;
+\begin{align}
+  \hv_{\cP_i}(t) &\;=\;
   \sum_{v\in V_{\cP_i}(t)}
   \alpha_v(t)\;\hv_v(t),
-  \qquad
-  \alpha_v(t) = \frac{
+  \notag \\
+  \alpha_v(t) &= \frac{
     \exp\!\bigl(\tau\cdot I(v,t)\bigr)
   }{
     \displaystyle\sum_{u\in V_{\cP_i}(t)}
     \exp\!\bigl(\tau\cdot I(u,t)\bigr)
   },
   \label{eq:platform-emb}
-\end{equation}
+\end{align}
 where $\tau$ is a learnable temperature parameter.
 
 \subsection{Joint Optimisation: Homoscedastic Multi-Task Loss}
@@ -386,15 +392,15 @@ where $\tau$ is a learnable temperature parameter.
 All three objectives are formulated as regression/continuous tasks to satisfy
 the Gaussian likelihood assumption underlying Kendall et al.'s homoscedastic
 uncertainty weighting~\citep{kendall2018multi}:
-\begin{equation}
+\begin{multline}
   \mathcal{L}
   \;=\;
   \frac{1}{2\sigma_1^2}\mathcal{L}_{\mathrm{TGN}}
-  + \frac{1}{2\sigma_2^2}\mathcal{L}_{\mathrm{Hawkes}}
+  + \frac{1}{2\sigma_2^2}\mathcal{L}_{\mathrm{Hawkes}} \\
   + \frac{1}{2\sigma_3^2}\mathcal{L}_{\mathrm{Virality}}
   + \log(\sigma_1\sigma_2\sigma_3),
   \label{eq:joint-loss}
-\end{equation}
+\end{multline}
 where $\sigma_1,\sigma_2,\sigma_3 > 0$ are learnable noise parameters.
 
 \paragraph{(1) TGN Structural Loss --- InfoNCE.}
@@ -402,19 +408,18 @@ To learn embeddings that discriminate temporal edges from noise, we use a
 temporal contrastive loss with degree-proportional negative sampling
 $P_n(v)\propto d_v$ (uniform sampling produces trivially easy negatives in
 heavy-tailed graphs):
-\begin{equation}
+Writing $s_t(u,v) \coloneqq \hv_u(t)^\top \hv_v(t)$ for the temporal edge
+score,
+\begin{multline}
   \mathcal{L}_{\mathrm{TGN}}
   = -\!\!\!\sum_{(u,v,t)\in\cE}
-  \log
-  \frac{
-    \exp\!\bigl(\hv_u(t)^\top \hv_v(t)\bigr)
-  }{
-    \exp\!\bigl(\hv_u(t)^\top \hv_v(t)\bigr)
-    +\displaystyle\sum_{v_{\neg}\sim P_n}
-    \exp\!\bigl(\hv_u(t)^\top \hv_{v_{\neg}}(t)\bigr)
-  }.
+  \Bigl[ s_t(u,v) \\
+  - \log\Bigl(
+    e^{s_t(u,v)}
+    +\!\!\sum_{v_{\neg}\sim P_n}\! e^{s_t(u,v_{\neg})}
+  \Bigr) \Bigr].
   \label{eq:info-nce}
-\end{equation}
+\end{multline}
 We draw $M=20$ negatives per positive edge, following Rossi et al.~(2020) as a
 baseline; a systematic ablation over $M\in[10,200]$ is left as future work.
 
@@ -483,17 +488,17 @@ Because normalised TGN attention weights sum to 1 by construction (softmax),
 they cannot serve as a proxy for graph volume. Instead, we define the effective
 temporal degree $k_v(t)$ directly from the event stream within the TGN's
 explicit memory horizon $\Delta T_{\mathrm{mem}}$:
-\begin{equation}
+\begin{multline}
   k_v(t)
   \;=\;
-  \left|\bigl\{
+  \bigl|\bigl\{
     u\in\cV
     \;\big|\;
-    \exists\;\text{interaction }(v,u,\tau):\;
+    \exists\,(v,u,\tau) \text{ with} \\
     t - \Delta T_{\mathrm{mem}} \le \tau \le t
-  \bigr\}\right|.
+  \bigr\}\bigr|.
   \label{eq:temporal-degree}
-\end{equation}
+\end{multline}
 This guarantees that hubs yield large $k_v(t)$ and lurkers yield
 $k_v(t)\approx 0$, restoring physical validity to \cref{eq:hmf}.
 
@@ -511,16 +516,16 @@ Hawkes Process}.
 
 Let $N_i(t)$ be the counting process of narrative events on platform $i
 \in\{1,\ldots,|\cP|\}$. The conditional intensity given history $\cH_t$ is:
-\begin{equation}
+\begin{multline}
   \lambda_i(t)
   \;=\;
-  \mu_i(t)
+  \mu_i(t) \\
   + \sum_{j=1}^{|\cP|}
     \sum_{t_k^{(j)} < t}
-    \hat{\alpha}_{ij}(t_k)\cdot
-    \exp\!\Bigl(-\hat{\gamma}_{ij}(t_k)\bigl(t - t_k^{(j)}\bigr)\Bigr),
+    \hat{\alpha}_{ij}(t_k)\,
+    e^{-\hat{\gamma}_{ij}(t_k)\bigl(t - t_k^{(j)}\bigr)},
   \label{eq:hawkes-intensity}
-\end{equation}
+\end{multline}
 where:
 \begin{itemize}[noitemsep]
   \item $\mu_i(t)$ is the exogenous background rate on platform $i$
@@ -633,19 +638,19 @@ Platform confidence bounds shrink as users become radicalized:
 \end{equation}
 where $\Rad(v,t)$ is a convex combination of structural isolation and
 historical opinion rigidity:
-\begin{equation}
+\begin{multline}
   \Rad(v,t)
   \;=\;
   \alpha_r\underbrace{\left(
     1 - \frac{|\partial\cN_v\cap\cC_v|}{|\cN_v|}
-  \right)}_{\text{structural isolation}}
+  \right)}_{\text{structural isolation}} \\
   \;+\;
   (1-\alpha_r)\underbrace{\left(
     \frac{\sum_{\tau\le t}\mathbf{1}_{\mathrm{rejected}}}
          {\sum_{\tau\le t}\mathbf{1}_{\mathrm{exposed}}}
   \right)}_{\text{historical rigidity}},
   \label{eq:radicalization}
-\end{equation}
+\end{multline}
 with $\cC_v$ denoting node $v$'s detected community and
 $\partial\cN_v$ its cross-community neighbourhood. Because
 $\Rad(v,t)\in[0,1]$ by construction, $\epsilon_p(v)\ge 0$ is always
@@ -661,16 +666,16 @@ polarisation with structural embedding generation.
 Internet influence is highly transient; static topology metrics such as
 standard PageRank are insufficient. We define a \textbf{Dynamic Influence
 Score}:
-\begin{equation}
+\begin{multline}
   I(v,t)
   \;=\;
   \omega_1\cdot\mathrm{TPR}(v,t)
   \;+\;
-  \omega_2\cdot\frac{dE(v,t)}{dt}
+  \omega_2\cdot\frac{dE(v,t)}{dt} \\
   \;+\;
   \omega_3\cdot\mathcal{C}_D(v,t),
   \label{eq:influence}
-\end{equation}
+\end{multline}
 where:
 \begin{itemize}[noitemsep]
   \item $\mathrm{TPR}(v,t)$ is Temporal PageRank~\citep{rozenshtein2016temporal};
@@ -710,14 +715,15 @@ its exogenous volume; branching is clamped near-critical (column sums
 $\le 0.93$), yielding a target whose variance is 68\% within-narrative
 (temporal). The generator is released with the code.
 
-\paragraph{Real multiplex snapshot (live Hacker News + GDELT).}
-We additionally ingest a live two-platform corpus: 5{,}653 Hacker News stories
-(Algolia API) and 431 GDELT news articles retrieved on the same topics, linked
-into 400 token-Jaccard narrative clusters of which 69 genuinely span both
-sources. This snapshot validates that the full pipeline runs on real data; its
-platform imbalance (93\%/7\%) limits statistical power for transfer analysis
-(\cref{sec:limitations}), and the released collector accumulates further data
-across runs.
+\paragraph{Real multiplex corpus (live Hacker News + GDELT).}
+We additionally ingest a live two-platform corpus with a released,
+\emph{accumulating} collector (each run merges into a deduplicated store):
+13{,}138 Hacker News stories (Algolia API) and 19{,}334 GDELT news articles
+retrieved on the same topics --- 32{,}472 events at a 40/60 platform split ---
+linked into 400 token-Jaccard narrative clusters of which 201 genuinely span
+both sources (166 transfer cases in the test split). Earlier, smaller
+snapshots of this corpus are used as ablations in \cref{sec:results}(4);
+a platform-imbalanced (93/7) snapshot destroys the transfer signal entirely.
 
 \paragraph{Chronological splitting and leakage prevention.}
 All datasets are partitioned \emph{strictly chronologically} into 70/10/20
@@ -742,7 +748,7 @@ verifies that no ordering leakage remains.
 \subsection{Results}
 \label{sec:results}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/transfer_auc.pdf}
 \caption{\textbf{Narrative transfer detection AUC.} Synthetic benchmark (filled
@@ -758,9 +764,9 @@ fixed on the validation split only --- no test leakage --- yielding
 (\cref{sec:results}(4)). The popularity baseline is anti-predictive on the
 real corpus.}
 \label{fig:transfer}
-\end{figure}
+\end{figure*}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \small
 \caption{\textbf{Narrative transfer detection} (synthetic benchmark): ranking
@@ -784,9 +790,9 @@ Static MHP (single global $\alpha$) & $0.500$ (by construction) \\
 \\[2pt]
 \footnotesize Mann--Whitney $p < 1.1\times10^{-4}$ (every seed); bootstrap 95\%
 CI $[0.58, 0.73]$. $n=209$ test narratives, 123 transfer.
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \small
 \caption{\textbf{Supporting metrics.} Next-platform timing (AUC, 3 seeds) and
@@ -805,7 +811,7 @@ Static GNN + SEIR    & ---                        & $0.923$ \\
 Naive mean           & $0.500$                    & $\mathbf{0.825}$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{(1) Engagement magnitude is intrinsically noise-dominated --- a
 negative result.} On log-engagement regression, no model (including ours)
@@ -897,177 +903,7 @@ from \texttt{results/}.
 % =============================================================
 % Bibliography
 % =============================================================
-\bibliographystyle{plainnat}
-\begin{thebibliography}{99}
-
-\bibitem{hawkes1971spectra}
-Hawkes, A. G. (1971).
-\newblock Spectra of some self-exciting and mutually exciting point processes.
-\newblock \textit{Biometrika}, 58(1), 83--90.
-
-\bibitem{du2016rmtpp}
-Du, N., Dai, H., Trivedi, R., Upadhyay, U., Gomez-Rodriguez, M., \& Song, L. (2016).
-\newblock Recurrent marked temporal point processes: Embedding event history to vector.
-\newblock \textit{KDD}.
-
-\bibitem{mei2017neural}
-Mei, H., \& Eisner, J. (2017).
-\newblock The neural Hawkes process: A neurally self-modulating multivariate point process.
-\newblock \textit{NeurIPS}.
-
-\bibitem{zuo2020transformer}
-Zuo, S., Jiang, H., Li, Z., Zhao, T., \& Zha, H. (2020).
-\newblock Transformer Hawkes process.
-\newblock \textit{ICML}.
-
-\bibitem{gomez2011netrate}
-Gomez-Rodriguez, M., Balduzzi, D., \& Sch{\"o}lkopf, B. (2011).
-\newblock Uncovering the temporal dynamics of diffusion networks.
-\newblock \textit{ICML}.
-
-\bibitem{farajtabar2017coevolve}
-Farajtabar, M., Wang, Y., Gomez-Rodriguez, M., Li, S., Zha, H., \& Song, L. (2017).
-\newblock COEVOLVE: A joint point process model for information diffusion and network evolution.
-\newblock \textit{Journal of Machine Learning Research}, 18.
-
-\bibitem{myers2012external}
-Myers, S. A., Zhu, C., \& Leskovec, J. (2012).
-\newblock Information diffusion and external influence in networks.
-\newblock \textit{KDD}.
-
-\bibitem{cheng2014cascades}
-Cheng, J., Adamic, L., Dow, P. A., Kleinberg, J. M., \& Leskovec, J. (2014).
-\newblock Can cascades be predicted?
-\newblock \textit{WWW}.
-
-\bibitem{zhao2015seismic}
-Zhao, Q., Erdogdu, M. A., He, H. Y., Rajaraman, A., \& Leskovec, J. (2015).
-\newblock SEISMIC: A self-exciting point process model for predicting tweet popularity.
-\newblock \textit{KDD}.
-
-\bibitem{rizoiu2017hip}
-Rizoiu, M.-A., Xie, L., Sanner, S., Cebrian, M., Yu, H., \& Van Hentenryck, P. (2017).
-\newblock Expecting to be HIP: Hawkes intensity processes for social media popularity.
-\newblock \textit{WWW}.
-
-\bibitem{kobayashi2016tideh}
-Kobayashi, R., \& Lambiotte, R. (2016).
-\newblock TiDeH: Time-dependent Hawkes process for predicting retweet dynamics.
-\newblock \textit{ICWSM}.
-
-\bibitem{shen2014rpp}
-Shen, H., Wang, D., Song, C., \& Barab{\'a}si, A.-L. (2014).
-\newblock Modeling and predicting popularity dynamics via reinforced Poisson processes.
-\newblock \textit{AAAI}.
-
-\bibitem{li2017deepcas}
-Li, C., Ma, J., Guo, X., \& Mei, Q. (2017).
-\newblock DeepCas: An end-to-end predictor of information cascades.
-\newblock \textit{WWW}.
-
-\bibitem{cao2017deephawkes}
-Cao, Q., Shen, H., Cen, K., Ouyang, W., \& Cheng, X. (2017).
-\newblock DeepHawkes: Bridging the gap between prediction and understanding of information cascades.
-\newblock \textit{CIKM}.
-
-\bibitem{weng2013virality}
-Weng, L., Menczer, F., \& Ahn, Y.-Y. (2013).
-\newblock Virality prediction and community structure in social networks.
-\newblock \textit{Scientific Reports}, 3, 2522.
-
-\bibitem{xu2020tgat}
-Xu, D., Ruan, C., Korpeoglu, E., Kumar, S., \& Achan, K. (2020).
-\newblock Inductive representation learning on temporal graphs.
-\newblock \textit{ICLR}.
-
-\bibitem{trivedi2019dyrep}
-Trivedi, R., Farajtabar, M., Biswal, P., \& Zha, H. (2019).
-\newblock DyRep: Learning representations over dynamic graphs.
-\newblock \textit{ICLR}.
-
-\bibitem{boguna2002correlated}
-Bogu{\~n}{\'a}, M., \& Pastor-Satorras, R. (2002).
-\newblock Epidemic spreading in correlated complex networks.
-\newblock \textit{Physical Review E}, 66, 047104.
-
-\bibitem{pastor2015epidemic}
-Pastor-Satorras, R., Castellano, C., Van Mieghem, P., \& Vespignani, A. (2015).
-\newblock Epidemic processes in complex networks.
-\newblock \textit{Reviews of Modern Physics}, 87, 925.
-
-\bibitem{zannettou2017webcentipede}
-Zannettou, S., Caulfield, T., De Cristofaro, E., Kourtellis, N., Leontiadis, I.,
-Sirivianos, M., Stringhini, G., \& Blackburn, J. (2017).
-\newblock The web centipede: Understanding how web communities influence each
-  other through the lens of mainstream and alternative news sources.
-\newblock \textit{IMC}.
-
-\bibitem{wilson2020crossplatform}
-Wilson, T., \& Starbird, K. (2020).
-\newblock Cross-platform disinformation campaigns: Lessons learned and next steps.
-\newblock \textit{Harvard Kennedy School Misinformation Review}, 1(1).
-
-\bibitem{horta2021migrations}
-Horta Ribeiro, M., Jhaver, S., Zannettou, S., Blackburn, J., Stringhini, G.,
-De Cristofaro, E., \& West, R. (2021).
-\newblock Do platform migrations compromise content moderation? Evidence from
-  r/The\_Donald and r/Incels.
-\newblock \textit{CSCW}.
-
-\bibitem{vosoughi2018spread}
-Vosoughi, S., Roy, D., \& Aral, S. (2018).
-\newblock The spread of true and false news online.
-\newblock \textit{Science}, 359(6380), 1146--1151.
-
-\bibitem{deffuant2000mixing}
-Deffuant, G., Neau, D., Amblard, F., \& Weisbuch, G. (2000).
-\newblock Mixing beliefs among interacting agents.
-\newblock \textit{Advances in Complex Systems}, 3, 87--98.
-
-\bibitem{hegselmann2002opinion}
-Hegselmann, R., \& Krause, U. (2002).
-\newblock Opinion dynamics and bounded confidence: Models, analysis and simulation.
-\newblock \textit{Journal of Artificial Societies and Social Simulation}, 5(3).
-
-\bibitem{castellano2009statistical}
-Castellano, C., Fortunato, S., \& Loreto, V. (2009).
-\newblock Statistical physics of social dynamics.
-\newblock \textit{Reviews of Modern Physics}, 81, 591.
-
-\bibitem{kendall2018multi}
-Kendall, A., Gal, Y., \& Cipolla, R. (2018).
-\newblock Multi-task learning using uncertainty to weigh losses for scene
-  geometry and semantics.
-\newblock \textit{CVPR}.
-
-\bibitem{rossi2020temporal}
-Rossi, E., Chamberlain, B., Frasca, F., Eynard, D., Monti, F., \& Bronstein,
-  M. (2020).
-\newblock Temporal graph networks for deep learning on dynamic graphs.
-\newblock \textit{ICML Workshop on Graph Representation Learning}.
-
-\bibitem{kumar2019predicting}
-Kumar, S., Zhang, X., \& Leskovec, J. (2019).
-\newblock Predicting dynamic embedding trajectory in temporal interaction
-  networks.
-\newblock \textit{KDD}.
-
-\bibitem{rozenshtein2016temporal}
-Rozenshtein, P., \& Gionis, A. (2016).
-\newblock Temporal PageRank.
-\newblock \textit{ECML PKDD}.
-
-\bibitem{pastor2001epidemic}
-Pastor-Satorras, R., \& Vespignani, A. (2001).
-\newblock Epidemic spreading in scale-free networks.
-\newblock \textit{Physical Review Letters}, 86(14), 3200.
-
-\bibitem{bremaud1996stability}
-Br{\'e}maud, P., \& Massouli{\'e}, L. (1996).
-\newblock Stability of nonlinear Hawkes processes.
-\newblock \textit{The Annals of Probability}, 24(3), 1563--1588.
-
-\end{thebibliography}
+\bibliography{references}
 
 \appendix
 
