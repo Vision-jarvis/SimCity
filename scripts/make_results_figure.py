@@ -16,10 +16,13 @@ BLUE, AQUA = "#2a78d6", "#1baf7a"          # validated categorical pair
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e6e5e1"
 
 # (label, synthetic value, syn CI, real per-seed values)
+# Real corpus = 32,472 events / 166 transfer cases. Seed 1's low AUC is the
+# MIRRORED solution (rho=-0.5/-0.6 vs the other seeds, which agree at +0.96):
+# a sign-identifiability failure of the bridge head, not absence of signal.
 ROWS = [
-    ("SimCity bridge score",          0.653, (0.580, 0.730), [0.319, 0.632, 0.248]),
-    ("Bridge, count-stratified",      0.660, (0.656, 0.662), [0.167, 0.580, 0.199]),
-    ("Popularity baseline",           0.551, None,           [0.612]),
+    ("SimCity bridge score",          0.653, (0.580, 0.730), [0.276, 0.590, 0.660]),
+    ("Bridge, count-stratified",      0.660, (0.656, 0.662), [0.218, 0.541, 0.586]),
+    ("Popularity baseline",           0.551, None,           [0.424]),
     ("Static MHP (by construction)",  0.500, None,           [0.500]),
 ]
 OFF = 0.16  # vertical offset between the two series within a row
