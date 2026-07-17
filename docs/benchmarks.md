@@ -98,16 +98,16 @@ scores `alpha_off`) and `..._<tag>_hawkes.npz` (causal per-event intensities).
 
 | Script | Question it answers | Output |
 |---|---|---|
-| `narrative_transfer_eval.py` | Which narratives will jump platforms? (headline; AUC + bootstrap CI + Mann-Whitney + count-stratified) | `results/narrative_transfer.{md,json}` |
-| `multiseed_stats.py` | Timing AUC mean±std over seeds + Welch t-test vs static MHP | `results/multiseed_stats.{md,json}` |
-| `platform_prediction_eval.py --data <pkl>` | Which platform fires next, from λ_i(t)? incl. transition-only slice | `results/platform_prediction.{md,json}` |
-| `compute_residual_metrics.py` | Within-narrative residual skill (isolates temporal signal from reach) | `results/residual_metrics.{md,json}` |
-| `burst_ranking_eval.py` | Surge ranking AUC/AP incl. oracle ceiling | `results/burst_ranking.{md,json}` |
+| `evaluation/narrative_transfer_eval.py` | Which narratives will jump platforms? (headline; AUC + bootstrap CI + Mann-Whitney + count-stratified) | `results/narrative_transfer.{md,json}` |
+| `evaluation/multiseed_stats.py` | Timing AUC mean±std over seeds + Welch t-test vs static MHP | `results/multiseed_stats.{md,json}` |
+| `evaluation/platform_prediction_eval.py --data <pkl>` | Which platform fires next, from λ_i(t)? incl. transition-only slice | `results/platform_prediction.{md,json}` |
+| `evaluation/compute_residual_metrics.py` | Within-narrative residual skill (isolates temporal signal from reach) | `results/residual_metrics.{md,json}` |
+| `evaluation/burst_ranking_eval.py` | Surge ranking AUC/AP incl. oracle ceiling | `results/burst_ranking.{md,json}` |
 | `analysis_tools/oracle_residual_check.py` | Is the magnitude target learnable at all? (oracle upper bound) | stdout |
-| `run_benchmarks.py` | Aggregate main table (naive / static GNN / vanilla TGN / SimCity) | `results/benchmark_table.{md,json}` |
+| `evaluation/run_benchmarks.py` | Aggregate main table (naive / static GNN / vanilla TGN / SimCity) | `results/benchmark_table.{md,json}` |
 | `baselines/run_virality_baselines.py --epochs 15` | Trains the Vanilla-TGN and Static-GNN baselines on identical splits | `results/graph_baselines.json` |
 | `run_hawkes_baseline.py` | Trains the classical static MHP | `baselines/hawkes_report.json` |
-| `scripts/make_results_figure.py` | Paper figure (dot + 95% CI forest plot) | `figures/transfer_auc.{pdf,png}` |
+| `scripts/make_results_figure.py` | Paper figure (dot + 95% CI forest plot) | `paper/figures/transfer_auc.{pdf,png}` |
 
 ## Full reproduction, in order
 
@@ -126,19 +126,19 @@ python -m baselines.run_virality_baselines --epochs 15
 python run_hawkes_baseline.py --data data/synthetic_events.pkl --epochs 8 --out baselines/hawkes_report.json
 
 # 4. evaluations
-python multiseed_stats.py --seeds 1 2 3
-python narrative_transfer_eval.py --preds results/simcity_test_preds_seed2.npz
-python run_benchmarks.py
-python compute_residual_metrics.py
-python burst_ranking_eval.py
+python -m evaluation.multiseed_stats --seeds 1 2 3
+python -m evaluation.narrative_transfer_eval --preds results/simcity_test_preds_seed2.npz
+python -m evaluation.run_benchmarks
+python -m evaluation.compute_residual_metrics
+python -m evaluation.burst_ranking_eval
 python analysis_tools/oracle_residual_check.py
 
 # 5. real data (repeat over days to grow the corpus)
 python -m data.build_real_dataset --pages 2 --gdelt-topics 45 --gdelt-timespan 1w --out data/real_events.pkl
 SIMCITY_DATA=data/real_events.pkl SIMCITY_EPOCHS=15 SIMCITY_TGN_W=0.1 \
 SIMCITY_HAWKES_W=10 SIMCITY_VIRALITY_W=0.1 SIMCITY_TAG=real python train.py
-python narrative_transfer_eval.py --preds results/simcity_test_preds_real.npz --out results/narrative_transfer_real.md
-python platform_prediction_eval.py --data data/real_events.pkl
+python -m evaluation.narrative_transfer_eval --preds results/simcity_test_preds_real.npz --out results/narrative_transfer_real.md
+python -m evaluation.platform_prediction_eval --data data/real_events.pkl
 
 # 6. paper figure
 python scripts/make_results_figure.py

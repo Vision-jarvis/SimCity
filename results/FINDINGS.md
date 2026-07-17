@@ -129,7 +129,7 @@ central claim, supported on a metric that has real signal. Margins are modest on
 synthetic data; real data + tuning is the path to strengthen them.
 
 Reproduce: `SIMCITY_HAWKES_W=10 SIMCITY_TGN_W=0.1 SIMCITY_VIRALITY_W=0.1 python train.py`
-then `python platform_prediction_eval.py`.
+then `python -m evaluation.platform_prediction_eval`.
 
 ## REAL-DATA validation (live Hacker News + GDELT news, 2 platforms)
 
@@ -323,6 +323,6 @@ python data/synthetic_generator.py --events 10000 --narratives 320 --out data/sy
 python train.py                                   # SimCity (SIMCITY_EPOCHS, SIMCITY_VIRALITY_W env vars)
 python -m baselines.run_virality_baselines --epochs 15   # Vanilla TGN + Static GNN
 python run_hawkes_baseline.py --data data/synthetic_events.pkl --epochs 8 --out baselines/hawkes_report.json
-python run_benchmarks.py                          # main table -> results/benchmark_table.md
-python compute_residual_metrics.py                # temporal metric -> results/residual_metrics.md
+python -m evaluation.run_benchmarks                          # main table -> results/benchmark_table.md
+python -m evaluation.compute_residual_metrics                # temporal metric -> results/residual_metrics.md
 ```

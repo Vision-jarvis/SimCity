@@ -1,4 +1,4 @@
-"""Generate the paper's main results figure (figures/transfer_auc.pdf).
+"""Generate the paper's main results figure (paper/figures/transfer_auc.pdf).
 
 Dot + interval plot of narrative transfer-detection AUC. Synthetic benchmark
 (filled blue, 3 seeds, bootstrap 95% CI) vs. live HN+GDELT corpus (open green
@@ -76,8 +76,8 @@ handles = [
 ]
 ax.legend(handles=handles, loc="lower left", fontsize=8, frameon=False)
 
-os.makedirs("figures", exist_ok=True)
+os.makedirs("paper/figures", exist_ok=True)
 fig.tight_layout()
-fig.savefig("figures/transfer_auc.pdf", bbox_inches="tight")
-fig.savefig("figures/transfer_auc.png", bbox_inches="tight")
-print("Wrote figures/transfer_auc.{pdf,png}")
+fig.savefig("paper/figures/transfer_auc.pdf", bbox_inches="tight")
+fig.savefig("paper/figures/transfer_auc.png", bbox_inches="tight")
+print("Wrote paper/figures/transfer_auc.{pdf,png}")

@@ -16,16 +16,19 @@ This repository currently implements the modeling core of that vision: a tempora
 - `run_hawkes_baseline.py` trains a CPU-friendly static Hawkes benchmark without requiring PyTorch Geometric.
 - `analysis_tools/cascade_monitor.py` converts Hawkes residuals into event-level cascade alert scores.
 - `run_cascade_monitor.py` trains the static Hawkes baseline and emits anomaly summaries for held-out stream events.
-- `main.tex` contains the research paper in **ACL format** (theory + empirical
-  validation; see `results/FINDINGS.md` and `docs/benchmarks.md`). Compile with
-  `tectonic main.tex`, or upload `main.tex` + `references.bib` + `acl.sty` +
-  `acl_natbib.bst` + `figures/` to Overleaf (pdfLaTeX). Switch the
+- `paper/` contains the research paper in **ACL format** (theory + empirical
+  validation; see `results/FINDINGS.md` and `docs/benchmarks.md`):
+  `main.tex`, `references.bib`, ACL style files, `figures/`, the compiled
+  `SimCity-ACL-preprint.pdf`, and `SimCity-paper-overleaf.zip` — upload the
+  zip directly to Overleaf (pdfLaTeX) or compile locally with
+  `tectonic main.tex` from inside `paper/`. Switch the
   `\usepackage[preprint]{acl}` option to `review` for anonymous submission or
-  `final` for camera-ready. A compiled `main.pdf` is checked in.
+  `final` for camera-ready.
 - `data/build_real_dataset.py` builds an accumulating real HN+GDELT corpus.
-- `narrative_transfer_eval.py`, `multiseed_stats.py`,
-  `platform_prediction_eval.py`, `compute_residual_metrics.py`,
-  `burst_ranking_eval.py`, and `run_benchmarks.py` form the evaluation suite.
+- `evaluation/` holds the evaluation suite (narrative transfer, next-platform
+  timing, residual/temporal metrics, burst ranking, multi-seed statistics, and
+  the benchmark-table aggregator) — run each as
+  `python -m evaluation.<name>` from the repo root.
 
 ## Features Implemented
 
@@ -202,9 +205,13 @@ narrative). Headline findings:
 
 Key knobs: `SIMCITY_DATA`, `SIMCITY_EPOCHS`, `SIMCITY_SEED`,
 `SIMCITY_TGN_W`/`SIMCITY_HAWKES_W`/`SIMCITY_VIRALITY_W` (task-loss weights),
-`SIMCITY_EXC_DIM`. Evaluations: `narrative_transfer_eval.py`,
-`multiseed_stats.py`, `platform_prediction_eval.py`,
-`compute_residual_metrics.py`, `burst_ranking_eval.py`, `run_benchmarks.py`,
+`SIMCITY_EXC_DIM`. Evaluations live in `evaluation/` and run as modules from
+the repo root (e.g. `python -m evaluation.narrative_transfer_eval`,
+`python -m evaluation.multiseed_stats`,
+`python -m evaluation.platform_prediction_eval`,
+`python -m evaluation.compute_residual_metrics`,
+`python -m evaluation.burst_ranking_eval`,
+`python -m evaluation.run_benchmarks`), plus
 `analysis_tools/oracle_residual_check.py`; figure:
 `scripts/make_results_figure.py`.
 

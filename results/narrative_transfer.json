@@ -2,13 +2,13 @@
   "n_narratives": 259,
   "n_transfer": 166,
   "orientation": 1.0,
-  "auc_bridge_score": 0.8420132141469102,
+  "auc_bridge_score": 0.6733061277367535,
   "auc_bridge_ci95": [
-    0.7873738292660891,
-    0.8877571800075746
+    0.6216534467751974,
+    0.7186662911918014
   ],
-  "mannwhitney_p_one_sided": 3.3206066139513404e-20,
+  "mannwhitney_p_one_sided": 1.1542226400155844e-08,
   "auc_popularity_baseline": 0.42372716673144184,
-  "auc_bridge_within_count_strata": 0.8467891887339898,
+  "auc_bridge_within_count_strata": 0.6845309516201684,
   "auc_static_mhp": 0.5
 }
