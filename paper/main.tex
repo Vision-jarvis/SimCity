@@ -817,8 +817,21 @@ Naive mean           & $0.500$                    & $\mathbf{0.825}$ \\
 \end{tabular}
 \end{table*}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{figures/oracle_noise.pdf}
+\caption{\textbf{The negative result, visualised.} True within-narrative
+engagement residual vs.\ the (scaled) residual of the leak-free
+recent-excitation feature --- the strongest causal predictor available to any
+model. A real but weak rank signal exists ($r = +0.20$), yet the Poisson-scale
+cloud dominates: an oracle regressor built on this feature has \emph{negative}
+MAE skill ($-0.11$) against a narrative-mean predictor. Engagement magnitude
+is not a usable headline metric under near-critical cascade dynamics.}
+\label{fig:oracle}
+\end{figure}
+
 \paragraph{(1) Engagement magnitude is intrinsically noise-dominated --- a
-negative result.} On log-engagement regression, no model (including ours)
+negative result (\cref{fig:oracle}).} On log-engagement regression, no model (including ours)
 beats the naive train-mean (MAE 0.825 vs.\ SimCity 0.848). We show this is a
 property of the target, not the models: an \emph{oracle} ridge regressor handed
 a leak-free recent-excitation feature achieves \emph{negative} within-narrative
@@ -854,8 +867,24 @@ $b_n$ (Spearman $-0.04$); it derives transfer propensity from observed
 temporal history, and retains its discrimination when both popularity and
 reach are controlled.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/sign_identifiability.pdf}
+\caption{\textbf{Sign non-identifiability of the bridge head, shown directly}
+(validation-oriented replicate run, real corpus; per-narrative bridge-score
+percentile ranks; green = narrative later transferred). \emph{Left:} two
+independently trained seeds recover essentially the \emph{same} narrative
+ranking ($\rho = +0.84$, along the identity). \emph{Right:} the third seed
+learns the \emph{mirror image} ($\rho = -0.59$, along the anti-diagonal); its
+horizontal band reflects near-tied scores that this solution assigns to most
+narratives. Which seeds converge to which orientation varies across runs ---
+exactly what a sign-symmetric likelihood predicts --- and validation-split
+orientation resolves it (3/3 seeds).}
+\label{fig:sign}
+\end{figure*}
+
 \paragraph{(4) Transfer detection on real data --- signal replicated up to a
-sign ambiguity.} On the accumulated live HN+GDELT corpus (32{,}472 events,
+sign ambiguity (\cref{fig:sign}).} On the accumulated live HN+GDELT corpus (32{,}472 events,
 40/60 platform split; 259 test narratives, 166 transfer), per-seed bridge AUCs
 are 0.276 / 0.590 / 0.660 (the latter two individually significant,
 $p = 8\times10^{-3}$ and $10^{-5}$). Superficially unstable --- but cross-seed
