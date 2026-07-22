@@ -232,6 +232,19 @@ structural dynamics.
 \label{sec:seir}
 % =============================================================
 
+\begin{remark}[Scope]
+\label{rem:scope}
+\Cref{sec:seir,sec:hmf,sec:deffuant,sec:influence} specify the \emph{simulation
+layer} we release with the code: the compartmental model, the mean-field
+bridge, the opinion dynamics, and the influence score. These are \textbf{not}
+independently validated by the experiments in \cref{sec:results}, which are
+carried by the temporal graph memory (\cref{sec:tgn}) and the cross-platform
+Hawkes head (\cref{sec:hawkes}) alone. We present them because they define the
+released system and the coupling the architecture assumes, but a reader should
+treat the empirical claims of this paper as pertaining to
+\cref{sec:tgn,sec:hawkes}. See \cref{sec:limitations}, limitation~(0).
+\end{remark}
+
 To rigorously capture the volatile, non-deterministic nature of viral information
 spread, we formulate a continuous-time Stochastic Master Equation (SME). We
 introduce a \textbf{Zombie} ($Z$) state to model algorithmic resurfacing, and an
@@ -1014,7 +1027,20 @@ work. Oriented real-data AUC also varies more across seeds ($\pm 0.104$) than
 the synthetic benchmark ($\pm 0.005$). (iii) The timing margin over static
 MHP, while consistent across seeds, is small on synthetic data. (iv) Results are
 on a two-platform real corpus (HN + news); the third social platform (Reddit/X)
-remains future work pending API access.
+remains future work pending API access. (v) \textbf{Narrative-cluster validity
+on the real corpus is a live threat.} Sampling cross-source pairs from our
+clusters (one HN title, one news title from the same narrative) showed they
+were frequently unrelated: only 2--3\% of sampled pairs exceeded a $0.5$
+title-embedding cosine. The cause was a defect in our own clustering code ---
+once a cluster-count cap was reached, remaining items were assigned to their
+nearest centroid \emph{regardless of similarity}. We have corrected the
+clusterer (no forced assignment; time-windowed clusters, since a narrative is
+a time-bounded event) and are re-deriving the corpus, but the real-corpus
+transfer figures should be read as \emph{provisional} until recomputed over
+validated narratives. The synthetic benchmarks are unaffected, as narrative
+identity there is ground truth by construction. We report this because the
+cheapest diagnostic in our revision --- manually inspecting a sample of our own
+data --- found the most serious defect in the paper.
 
 \subsection{Reproducibility}
 All experiments run on CPU. The repository releases the generator, collectors,

@@ -2,6 +2,44 @@
 
 _Generated 2026-07-04. All numbers are reproducible via the commands at the bottom._
 
+## ⚠ REVIEW RESPONSE — STEP 6 FOUND A BUG THAT INVALIDATES THE REAL-CORPUS NARRATIVES
+
+Reviewer Step 6 asked us to sample narrative clusters and check whether the HN
+story and the GDELT article are actually the same event. Doing so immediately
+exposed that they usually are **not**:
+
+| Clustering (buggy) | Proxy mean cosine | Frac of cross-source pairs > 0.5 |
+|---|---|---|
+| token-Jaccard | 0.128 | **0.03** |
+| sentence-embedding | 0.215 | **0.02** |
+
+Sampled pairs were plainly unrelated, e.g. *"Somewhere, I'm online and
+listening to music"* paired with a Japanese newspaper masthead.
+
+**Root cause (a real bug in our code, not just a weak heuristic):** both
+clusterers capped the number of clusters at `max_narr=400` and then, in the
+`else` branch, assigned every subsequent item to its **nearest centroid
+regardless of similarity**. With 32,472 events and a 400-cluster cap, the
+overwhelming majority of events were force-assigned into unrelated clusters.
+The real corpus's "narratives" were therefore largely artifacts.
+
+**Scope of the damage.**
+- **Synthetic benchmarks are unaffected**: narratives there are ground truth by
+  construction (the generator assigns them), so the Hawkes-benchmark and SIR
+  results stand.
+- **Real-corpus transfer numbers (AUC 0.778 ± 0.104) are computed over
+  compromised narrative definitions** and must be re-derived before being
+  claimed. We flag them as provisional pending the rebuild.
+
+**Fix applied:** `cluster_narratives_embedding` no longer force-assigns —
+an item matching nothing above threshold starts its own cluster — and clusters
+are now time-windowed (a narrative is a time-bounded event), which is both more
+faithful and much faster. Threshold sweep and corpus rebuild in progress; real
+-data numbers will be restated against the corrected clusters.
+
+**Lesson:** the reviewer's cheapest, zero-compute step found the most serious
+defect in the paper. Sampling your own data beats trusting your own pipeline.
+
 ## REVIEW RESPONSE — STEP 1: the baseline that decides everything
 
 Reviewer critique: "your headline baseline (static MHP) is 0.5 *by

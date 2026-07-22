@@ -1,0 +1,16 @@
+{
+  "jaccard": {
+    "n_clusters": 400,
+    "n_cross_source_pairs_sampled": 100,
+    "proxy_mean_cosine": 0.1282909212447703,
+    "proxy_frac_above_0.5": 0.03,
+    "proxy_frac_above_0.6": 0.0
+  },
+  "embedding": {
+    "n_clusters": 400,
+    "n_cross_source_pairs_sampled": 100,
+    "proxy_mean_cosine": 0.2151389542222023,
+    "proxy_frac_above_0.5": 0.02,
+    "proxy_frac_above_0.6": 0.01
+  }
+}

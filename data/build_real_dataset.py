@@ -157,33 +157,55 @@ def encode_titles(titles, model_name="all-MiniLM-L6-v2", batch_size=128):
     return np.asarray(emb, dtype=np.float32)
 
 
-def cluster_narratives_embedding(emb, threshold=0.55, max_narr=400):
-    """Greedy centroid clustering on cosine similarity of sentence embeddings.
+def cluster_narratives_embedding(emb, times=None, threshold=0.55,
+                                 window_days=7.0):
+    """Time-windowed greedy centroid clustering on sentence-embedding cosine.
 
-    Mirrors the greedy structure of the token-Jaccard clusterer so the two are
-    directly comparable; only the similarity function changes.
+    Two properties matter for correctness, both learned the hard way:
+
+    * **No forced assignment.** An earlier version capped the number of
+      clusters and assigned every subsequent item to its nearest centroid
+      *regardless of similarity*, which silently destroyed cluster integrity
+      once the cap was reached (most items ended up in unrelated clusters). An
+      item that matches nothing above ``threshold`` now starts its own cluster.
+    * **Temporal locality.** A narrative is a time-bounded event, so only
+      clusters active within ``window_days`` are candidates. This is both more
+      faithful and much faster, since the active centroid set stays small.
     """
-    centroids, counts, assign = [], [], []
-    for v in emb:
-        if centroids:
-            C = np.stack(centroids)
-            sims = C @ v  # embeddings are L2-normalised
-            j = int(np.argmax(sims))
-            if sims[j] >= threshold:
-                assign.append(j)
-                n = counts[j]
-                centroids[j] = (centroids[j] * n + v) / (n + 1)
-                centroids[j] /= np.linalg.norm(centroids[j]) + 1e-12
-                counts[j] = n + 1
-                continue
-        if len(centroids) < max_narr:
+    n = len(emb)
+    if times is None:
+        times = np.arange(n, dtype=float) * 0.0
+    order = np.argsort(times)
+    win = window_days * 86400.0
+
+    centroids, counts, last_t = [], [], []
+    active = []                      # indices of clusters inside the window
+    assign = np.zeros(n, dtype=np.int64)
+
+    for i in order:
+        v, t = emb[i], times[i]
+        active = [j for j in active if t - last_t[j] <= win]
+        j_best, s_best = -1, -1.0
+        if active:
+            C = np.stack([centroids[j] for j in active])
+            sims = C @ v
+            k = int(np.argmax(sims))
+            j_best, s_best = active[k], float(sims[k])
+        if j_best >= 0 and s_best >= threshold:
+            c = counts[j_best]
+            centroids[j_best] = (centroids[j_best] * c + v) / (c + 1)
+            centroids[j_best] /= np.linalg.norm(centroids[j_best]) + 1e-12
+            counts[j_best] = c + 1
+            last_t[j_best] = t
+            assign[i] = j_best
+        else:
             centroids.append(v.copy())
             counts.append(1)
-            assign.append(len(centroids) - 1)
-        else:
-            C = np.stack(centroids)
-            assign.append(int(np.argmax(C @ v)))
-    return np.array(assign), len(centroids)
+            last_t.append(t)
+            j = len(centroids) - 1
+            active.append(j)
+            assign[i] = j
+    return assign, len(centroids)
 
 
 def cluster_narratives(titles, threshold=0.34, max_narr=400):
