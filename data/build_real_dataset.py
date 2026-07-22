@@ -144,6 +144,48 @@ def fetch_gdelt(keywords, per_query=250, timespan="1w"):
     return rows
 
 
+def encode_titles(titles, model_name="all-MiniLM-L6-v2", batch_size=128):
+    """Sentence-embed titles (revision Step 7).
+
+    Replaces the lexical hashing representation with real semantic embeddings,
+    used both for narrative clustering and as the per-event content features.
+    """
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer(model_name)
+    emb = model.encode(list(titles), batch_size=batch_size,
+                       show_progress_bar=False, normalize_embeddings=True)
+    return np.asarray(emb, dtype=np.float32)
+
+
+def cluster_narratives_embedding(emb, threshold=0.55, max_narr=400):
+    """Greedy centroid clustering on cosine similarity of sentence embeddings.
+
+    Mirrors the greedy structure of the token-Jaccard clusterer so the two are
+    directly comparable; only the similarity function changes.
+    """
+    centroids, counts, assign = [], [], []
+    for v in emb:
+        if centroids:
+            C = np.stack(centroids)
+            sims = C @ v  # embeddings are L2-normalised
+            j = int(np.argmax(sims))
+            if sims[j] >= threshold:
+                assign.append(j)
+                n = counts[j]
+                centroids[j] = (centroids[j] * n + v) / (n + 1)
+                centroids[j] /= np.linalg.norm(centroids[j]) + 1e-12
+                counts[j] = n + 1
+                continue
+        if len(centroids) < max_narr:
+            centroids.append(v.copy())
+            counts.append(1)
+            assign.append(len(centroids) - 1)
+        else:
+            C = np.stack(centroids)
+            assign.append(int(np.argmax(C @ v)))
+    return np.array(assign), len(centroids)
+
+
 def cluster_narratives(titles, threshold=0.34, max_narr=400):
     """Greedy token-Jaccard topic clustering -> narrative id per story."""
     narr_tokens, assign = [], []
@@ -167,7 +209,8 @@ def cluster_narratives(titles, threshold=0.34, max_narr=400):
     return np.array(assign), len(narr_tokens)
 
 
-def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w"):
+def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w",
+          cluster_method="jaccard", emb_threshold=0.55):
     print("Fetching real Hacker News stories (Algolia)...")
     hits = fetch_hn(pages)
     print(f"  fetched {len(hits)} stories")
@@ -216,7 +259,13 @@ def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w"):
     # src = author/domain id; dst = narrative (topic cluster spanning BOTH sources)
     authors = {a: i for i, a in enumerate(df["author"].unique())}
     num_users = len(authors)
-    narr, n_narr = cluster_narratives(df["title"].tolist())
+    if cluster_method == "embedding":
+        print("Encoding titles with sentence embeddings (Step 7)...")
+        emb = encode_titles(df["title"].tolist())
+        narr, n_narr = cluster_narratives_embedding(emb, threshold=emb_threshold)
+    else:
+        emb = None
+        narr, n_narr = cluster_narratives(df["title"].tolist())
     df["src"] = df["author"].map(authors).astype(int)
     df["dst"] = (narr + num_users).astype(int)
 
@@ -227,7 +276,10 @@ def build(pages, out, with_gdelt=True, gdelt_topics=45, gdelt_timespan="1w"):
     vol = b.map(b.value_counts()).astype(float)
     df["gdelt_volume"] = vol.values
 
-    df["msg"] = [hash_embedding(t) for t in df["title"]]
+    if emb is not None:
+        df["msg"] = list(emb)          # real semantic content features
+    else:
+        df["msg"] = [hash_embedding(t) for t in df["title"]]
     df["log_engagement"] = compute_future_engagement(df, prediction_window_seconds=86400)
 
     keep = ["src", "dst", "t", "platform", "gdelt_volume", "msg", "log_engagement"]
@@ -258,6 +310,10 @@ if __name__ == "__main__":
     ap.add_argument("--no-gdelt", action="store_true", help="HN only (skip GDELT)")
     ap.add_argument("--gdelt-topics", type=int, default=45)
     ap.add_argument("--gdelt-timespan", default="1w")
+    ap.add_argument("--cluster-method", choices=["jaccard", "embedding"],
+                    default="jaccard")
+    ap.add_argument("--emb-threshold", type=float, default=0.55)
     args = ap.parse_args()
     build(args.pages, args.out, with_gdelt=not args.no_gdelt,
-          gdelt_topics=args.gdelt_topics, gdelt_timespan=args.gdelt_timespan)
+          gdelt_topics=args.gdelt_topics, gdelt_timespan=args.gdelt_timespan,
+          cluster_method=args.cluster_method, emb_threshold=args.emb_threshold)

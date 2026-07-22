@@ -49,8 +49,8 @@
 \newcommand{\Rad}{\text{Radicalization}}
 
 % -------------------------------------------------------
-\title{SimCity: A Unified Neural-Epidemiological Architecture for Modelling
-  Viral Information Dynamics on Multiplex Internet Graphs}
+\title{Which Narratives Cross Platforms? \\ Narrative-Conditioned Hawkes
+  Processes for Cross-Platform Transfer Prediction}
 \author{Anonymous Author(s) \\
   Affiliation \\
   \texttt{email@example.org}}
@@ -60,35 +60,98 @@
 \maketitle
 
 \begin{abstract}
-The dynamics of internet virality exhibit both macroscopic epidemiological
-patterns and microscopic, graph-structural volatility. Current literature largely
-isolates these domains: macroscopic models (e.g., SEIR) fail to capture the
-transient topology of social networks, while microscopic graph models
-(e.g., Temporal Graph Networks) lack population-level infection dynamics. In
-this paper, we present \textbf{SimCity}, a unified neural-epidemiological
-architecture that bridges this gap. We introduce a Stochastic SEIR-Z-D
-compartmental model grounded by a Degree-Correlated Heterogeneous Mean-Field
-(HMF) approximation, which maps continuous-time Temporal Graph Network (TGN)
-embeddings directly into epidemiological transition rates. We couple this with a
-Neural Multivariate Hawkes Process for cross-platform narrative transfer and a
-Filippov-compliant smooth Deffuant model for agent behavioural evolution.
-Empirically, we make three contributions: (1) we show that raw engagement-count
-regression --- the de-facto virality metric --- is intrinsically noise-dominated
-under near-critical cascade dynamics (even an oracle handed the true excitation
-state attains negative residual skill), arguing for timing- and transfer-based
-evaluation; (2) on a controlled multiplex benchmark with ground-truth
-cross-platform excitation, our narrative-conditioned intensity model detects
-\emph{which} narratives will transfer across platforms (AUC $0.653 \pm 0.005$
-over three seeds, $p < 1.1\times10^{-4}$, robust to popularity and reach
-confounds) --- a task on which any static Hawkes process is random by
-construction; and (3) the result transfers to the wild: on a 32k-event live
-Hacker News + GDELT corpus from our released accumulating collector, we
-diagnose a sign non-identifiability of the narrative-conditioned excitation
-head (seeds converge to the same ranking up to mirror image, $\rho = 0.96$),
-resolve it with leakage-free validation-split orientation, and obtain AUC
-$0.778 \pm 0.104$ over three seeds (every seed $p \le 1.2\times10^{-8}$),
-against an anti-predictive popularity baseline.
+Narratives do not stay where they start: a thread on one platform resurfaces as
+a news article, and the jump --- not the volume --- is often what matters. We
+study a prediction task that follows directly from this: given a narrative
+observed so far on a \emph{single} platform, will it later cross to another?
+We approach it with a Temporal Graph Network whose memory conditions the
+excitation matrix of a multivariate Hawkes process, so that each narrative
+receives its own cross-platform transfer parameters. Three findings follow.
+First, a negative result: the de-facto virality metric --- regressing future
+engagement counts --- is intrinsically noise-dominated under near-critical
+cascade dynamics; an oracle handed the true excitation state still attains
+\emph{negative} skill against a per-narrative mean, so magnitude regression
+cannot discriminate models and transfer should be evaluated instead. Second,
+narrative-conditioned excitation predicts transfer on a controlled benchmark
+(AUC $0.653 \pm 0.005$, robust to popularity and reach confounds) and on a
+32k-event live Hacker News + GDELT corpus ($0.778 \pm 0.104$), beating a
+per-narrative Hawkes baseline fitted independently per narrative under a
+matched protocol. Third, we diagnose a sign non-identifiability of the
+conditioned head --- independently trained models recover the same narrative
+ranking up to a mirror image --- and resolve it with leakage-free
+validation-split orientation. We release the model, an accumulating live
+collector, and the evaluation suite, and report explicitly which components of
+the architecture are and are not empirically load-bearing.
 \end{abstract}
+
+% =============================================================
+\section{Introduction}
+\label{sec:intro}
+% =============================================================
+
+A story breaks on Hacker News; two days later it is in the technology press.
+Another, superficially similar, never leaves the forum. Which of the two will
+cross is a question with direct consequences for misinformation monitoring,
+platform moderation, and the study of how attention moves through the
+information ecosystem --- and it is a question about \emph{identity}, not
+volume: it asks which narratives migrate, not how large they grow.
+
+Existing work approaches the surrounding territory from two directions.
+Measurement studies document cross-platform influence
+richly~\citep{zannettou2017webcentipede,wilson2020crossplatform,vosoughi2018spread},
+but describe transfer after the fact rather than predicting it. Cascade
+models --- self-exciting point processes and their neural
+descendants~\citep{zhao2015seismic,mei2017neural,cao2017deephawkes} --- predict
+\emph{how much} a cascade will grow, typically within a single platform, and
+are parameterised globally: one excitation matrix shared across all content.
+A globally parameterised process cannot rank narratives against each other at
+all, because every narrative is assigned identical transfer parameters. That
+observation motivates our approach: make the excitation matrix a function of
+the narrative's own evolving state.
+
+Concretely, we condition a multivariate Hawkes process on the memory of a
+Temporal Graph Network, so that the cross-platform excitation
+$\hat\alpha_{ij}$ and decay $\hat\gamma_{ij}$ are emitted \emph{per narrative}
+per event. The off-diagonal branching mass of that matrix is a natural
+transfer propensity, which we evaluate causally: scores are computed only from
+events preceding a narrative's first platform switch.
+
+Our contributions:
+
+\begin{itemize}[leftmargin=*,noitemsep,topsep=2pt]
+  \item \textbf{A negative result that reframes evaluation
+    (\cref{sec:results}(1)).} Regressing future engagement counts --- the
+    standard virality metric --- is noise-dominated under near-critical
+    branching. An oracle regressor given the true recent-excitation state
+    achieves negative skill against a per-narrative mean and near-random
+    surge-ranking AUC. No model can win this metric, so it cannot separate
+    them; we argue evaluation should move to transfer and timing.
+  \item \textbf{Narrative transfer detection
+    (\cref{sec:results}(3),(4)).} Narrative-conditioned excitation ranks
+    which single-platform narratives will later cross, on a controlled
+    benchmark (AUC $0.653 \pm 0.005$) and on a live Hacker News + GDELT corpus
+    ($0.778 \pm 0.104$). Crucially it beats a \emph{per-narrative} Hawkes
+    baseline --- independent MLE fits, no graph conditioning --- under a
+    protocol giving both sides one validation-selected degree of freedom,
+    isolating the contribution of amortisation across narratives.
+  \item \textbf{A diagnosed and repaired identifiability failure
+    (\cref{sec:results}(4)).} The likelihood does not pin the sign of the
+    conditioned head: independently trained models recover the same ranking up
+    to a mirror image ($\rho = 0.96$). We show this directly
+    (\cref{fig:sign}) and resolve it by fixing orientation on a validation
+    split, with no test leakage.
+  \item \textbf{Released artifacts and an honest scope statement.} We release
+    two generative benchmarks (one deliberately \emph{not} Hawkes-based), an
+    accumulating live collector, and the full evaluation suite. We also state
+    plainly which parts of the architecture carry the results and which are
+    released but unvalidated (\cref{sec:limitations}).
+\end{itemize}
+
+We report null and negative outcomes alongside positive ones: the next-event
+timing comparison is not significant and we present it as such, and the
+compartmental, mean-field, and opinion-dynamics components of the framework
+are released as a simulation layer rather than claimed as validated
+contributions.
 
 % =============================================================
 \section{Related Work}
