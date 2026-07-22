@@ -4,9 +4,9 @@
   "n_train_events": 20452,
   "n_test_events": 7461,
   "test": {
-    "virality_mae": 1.0434482097625732,
-    "virality_rmse": 1.3484916687011719,
-    "hawkes_nll": -1.5850858202106075
+    "virality_mae": 1.0994008779525757,
+    "virality_rmse": 1.3565850257873535,
+    "hawkes_nll": -1.6418567409640865
   },
   "naive_mean_baseline": {
     "virality_mae": 1.0687625408172607,
