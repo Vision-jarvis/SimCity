@@ -37,11 +37,16 @@ def train():
     val_loader = TemporalDataLoader(val_data, batch_size=200)
     test_loader = TemporalDataLoader(test_data, batch_size=200)
     
+    # Node count must span ALL splits: validation/test can reference node ids
+    # beyond the max seen in training (e.g. narratives appearing only later in
+    # the chronological stream). Sizing state on train_data.num_nodes crashes
+    # the neighbour loader on those ids. Use the full-dataset node count.
+    num_nodes = int(data.num_nodes)
+
     # Temporal Neighborhood Loader (for GraphAttentionEmbedding)
-    neighbor_loader = LastNeighborLoader(train_data.num_nodes, size=10, device=device)
-    
+    neighbor_loader = LastNeighborLoader(num_nodes, size=10, device=device)
+
     # 2. Instantiate Models
-    num_nodes = train_data.num_nodes
     num_platforms = 3
     embedding_dim = 256
     raw_msg_dim = train_data.msg.size(-1)
