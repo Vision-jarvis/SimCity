@@ -1,0 +1,63 @@
+{
+  "simcity_mean": 0.7779828993392927,
+  "simcity_std": 0.10427428416077775,
+  "baseline_mean": 0.6305544759683896,
+  "baseline_std": 0.0,
+  "per_seed": {
+    "1": {
+      "baseline_stat": "rate",
+      "baseline_val_auc": 0.585421888053467,
+      "baseline_test_auc": 0.6305544759683896,
+      "baseline_strata": 0.7071860488099256,
+      "oracle_baseline_stat": "mu",
+      "oracle_baseline_test_auc": 0.7275877704365851,
+      "simcity_test_auc": 0.881849980567431,
+      "simcity_strata": 0.8942083399721397,
+      "diff_mean": 0.25029068972460183,
+      "diff_ci95": [
+        0.17233096383163748,
+        0.3320178556623692
+      ],
+      "n_fitted": 130,
+      "n_narratives": 259,
+      "n_transfer": 166
+    },
+    "2": {
+      "baseline_stat": "rate",
+      "baseline_val_auc": 0.585421888053467,
+      "baseline_test_auc": 0.6305544759683896,
+      "baseline_strata": 0.7071860488099256,
+      "oracle_baseline_stat": "mu",
+      "oracle_baseline_test_auc": 0.7275877704365851,
+      "simcity_test_auc": 0.6733061277367535,
+      "simcity_strata": 0.6845309516201684,
+      "diff_mean": 0.04190776652471438,
+      "diff_ci95": [
+        -0.02869204572390623,
+        0.11715734036781328
+      ],
+      "n_fitted": 130,
+      "n_narratives": 259,
+      "n_transfer": 166
+    },
+    "3": {
+      "baseline_stat": "rate",
+      "baseline_val_auc": 0.585421888053467,
+      "baseline_test_auc": 0.6305544759683896,
+      "baseline_strata": 0.7071860488099256,
+      "oracle_baseline_stat": "mu",
+      "oracle_baseline_test_auc": 0.7275877704365851,
+      "simcity_test_auc": 0.7787925897136936,
+      "simcity_strata": 0.8415059321670361,
+      "diff_mean": 0.14730900066435892,
+      "diff_ci95": [
+        0.04704310381429186,
+        0.25092883047773995
+      ],
+      "n_fitted": 130,
+      "n_narratives": 259,
+      "n_transfer": 166
+    }
+  },
+  "verdict": "SimCity > per-narrative baseline"
+}

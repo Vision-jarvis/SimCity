@@ -1,0 +1,60 @@
+{
+  "preds": "results/simcity_test_preds_real_s2.npz",
+  "n_narratives": 259,
+  "n_transfer": 166,
+  "n_fitted": 130,
+  "simcity_bridge": {
+    "auc": 0.6733061277367535,
+    "strata": 0.6845309516201684,
+    "orientation": 1.0
+  },
+  "per_narrative_baseline": {
+    "branching": {
+      "auc_raw": 0.43114393056095346,
+      "auc_best_sign": 0.5688560694390465,
+      "strata": 0.5446158867211499
+    },
+    "alpha": {
+      "auc_raw": 0.41741158181111543,
+      "auc_best_sign": 0.5825884181888845,
+      "strata": 0.5514862093809463
+    },
+    "mu": {
+      "auc_raw": 0.7275877704365851,
+      "auc_best_sign": 0.7275877704365851,
+      "strata": 0.6820356030882346
+    },
+    "gamma": {
+      "auc_raw": 0.4878222567690116,
+      "auc_best_sign": 0.5121777432309884,
+      "strata": 0.4958595221753117
+    },
+    "n_events": {
+      "auc_raw": 0.42372716673144184,
+      "auc_best_sign": 0.5762728332685582,
+      "strata": 0.5454851024491589
+    },
+    "rate": {
+      "auc_raw": 0.6305544759683896,
+      "auc_best_sign": 0.6305544759683896,
+      "strata": 0.7071860488099256
+    },
+    "ia_cv": {
+      "auc_raw": 0.4328928617696593,
+      "auc_best_sign": 0.5671071382303408,
+      "strata": 0.5316236632026106
+    },
+    "burstiness": {
+      "auc_raw": 0.47836507319600985,
+      "auc_best_sign": 0.5216349268039902,
+      "strata": 0.5316236632026106
+    }
+  },
+  "best_baseline": {
+    "statistic": "mu",
+    "auc_raw": 0.7275877704365851,
+    "auc_best_sign": 0.7275877704365851,
+    "strata": 0.6820356030882346
+  },
+  "verdict": "per-narrative baseline matches or beats SimCity"
+}

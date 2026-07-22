@@ -773,27 +773,33 @@ real corpus.}
 \begin{table*}[t]
 \centering
 \small
-\caption{\textbf{Narrative transfer detection} (synthetic benchmark): ranking
-which single-platform narratives will later cross platforms, scored causally
-from pre-switch events. AUC over three seeds; a static MHP is random by
-construction. The learned score survives both the popularity and latent-reach
-confounds.}
+\caption{\textbf{Narrative transfer detection}: ranking which single-platform
+narratives will later cross platforms, scored causally from pre-switch events.
+The decisive comparator is the \emph{per-narrative} Hawkes baseline (row 3):
+independent MLE fits with no graph conditioning, given exactly one
+validation-selected degree of freedom, matching SimCity's.}
 \label{tab:transfer}
-\begin{tabular}{lc}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Scorer} & \textbf{AUC} \\
+\textbf{Scorer} & \textbf{Synthetic AUC} & \textbf{Real AUC} \\
 \midrule
-SimCity bridge score (per-narrative $\sum_{i\neq j}\hat\alpha_{ij}/\hat\gamma_{ij}$)
-  & $\mathbf{0.653 \pm 0.005}$ \\
-\quad within event-count strata & $0.656$--$0.662$ \\
-\quad within latent-reach strata & $0.656$--$0.661$ \\
-Popularity baseline (event count) & $0.551$ \\
-Static MHP (single global $\alpha$) & $0.500$ (by construction) \\
+SimCity bridge score & $\mathbf{0.653 \pm 0.005}$ & $\mathbf{0.778 \pm 0.104}$ \\
+\quad within event-count strata & $0.656$--$0.662$ & $0.685$--$0.894$ \\
+\quad within latent-reach strata & $0.656$--$0.661$ & --- \\
+Per-narrative Hawkes (val-selected) & --- & $0.631$ \\
+\quad \emph{oracle} statistic (test-selected) & --- & \emph{0.728} \\
+Popularity baseline (event count) & $0.551$ & $0.424$ \\
+Static MHP (single global $\alpha$) & \multicolumn{2}{c}{$0.500$ (by construction)} \\
 \bottomrule
 \end{tabular}
 \\[2pt]
-\footnotesize Mann--Whitney $p < 1.1\times10^{-4}$ (every seed); bootstrap 95\%
-CI $[0.58, 0.73]$. $n=209$ test narratives, 123 transfer.
+\footnotesize Synthetic: Mann--Whitney $p < 1.1\times10^{-4}$ every seed,
+bootstrap CI $[0.58, 0.73]$, $n=209$ (123 transfer). Real: $n=259$ (166
+transfer); SimCity beats the val-selected per-narrative baseline by
+$+0.250$/$+0.042$/$+0.147$ across seeds (paired bootstrap CI excludes zero on
+two of three). The \emph{oracle} row --- best per-narrative statistic chosen on
+the test labels, an upper bound unavailable in practice --- lies inside
+SimCity's seed spread, so we do not claim a large margin.
 \end{table*}
 
 \begin{table*}[t]
@@ -840,13 +846,18 @@ next-window branching-process counts carry Poisson-scale variance. We therefore
 argue engagement-magnitude regression is an ill-posed headline metric for
 cascade models, and evaluate timing and transfer instead.
 
-\paragraph{(2) Cross-platform next-event timing.} Using the conditional
-intensity $\lambda_i(t_k)$ (causal, history strictly before $t_k$) to predict
-which platform fires next: over three seeds, SimCity attains AUC
-$0.610 \pm 0.005$ vs.\ static MHP $0.605 \pm 0.000$ --- above the static
-baseline on every seed, though the margin is not significant at $n{=}3$ seeds
-(Welch $p = 0.23$). Shuffling test timestamps inflates SimCity's Hawkes NLL by
-$15$--$25\times$, confirming genuine temporal-order learning.
+\paragraph{(2) Cross-platform next-event timing --- a null result.} Using the
+conditional intensity $\lambda_i(t_k)$ (causal, history strictly before $t_k$)
+to predict which platform fires next, SimCity attains AUC
+$0.610 \pm 0.005$ vs.\ static MHP $0.605 \pm 0.000$ over three seeds. Although
+SimCity is nominally ahead on every seed, the margin is \emph{not}
+statistically significant (Welch $p = 0.23$) and we report it as a null
+result: on this task the neural conditioning does not demonstrably improve on
+a global Hawkes parameterisation. The temporal machinery is nonetheless
+functioning --- shuffling test timestamps inflates SimCity's Hawkes NLL by
+$15$--$25\times$ --- but next-event platform identity is largely determined by
+platform autocorrelation (a last-platform persistence rule reaches 0.982
+accuracy on the real corpus), leaving little headroom for any model.
 
 \paragraph{(3) Narrative transfer detection --- the headline result
 (\cref{fig:transfer}, \cref{tab:transfer}).} We ask:
@@ -858,10 +869,20 @@ with \textbf{AUC $0.653 \pm 0.005$ over three seeds} (per-seed 0.649/0.658/0.652
 95\% bootstrap CI $[0.58, 0.73]$; Mann--Whitney $p < 1.1\times10^{-4}$ on every
 seed). The score survives confound controls on all seeds: AUC 0.656--0.662
 within event-count strata and 0.656--0.661 within latent-reach strata, versus
-0.551 for the popularity baseline. Crucially, a
-static MHP has a single global $\alpha$ and \emph{cannot rank narratives at
-all} (AUC 0.5 by construction): per-narrative transfer detection is a
-capability added by the neural parameterisation, not a marginal improvement.
+0.551 for the popularity baseline. A static MHP has a single global $\alpha$ and cannot rank narratives at all
+(AUC 0.5 by construction), but beating a baseline that is degenerate by
+construction establishes little. The load-bearing comparator is therefore a
+\emph{per-narrative} Hawkes process: independent MLE fits, no graph
+conditioning. Because a pre-switch window contains events on a single platform
+by construction, such a fit cannot identify cross-platform $\alpha_{ij}$ at
+all; it can only characterise the narrative's own arrival dynamics, from a
+median of three events. Granting it one validation-selected degree of freedom
+(statistic and sign), matching SimCity's, it reaches AUC 0.631 on the real
+corpus versus SimCity's $0.778 \pm 0.104$, with paired-bootstrap intervals
+excluding zero on two of three seeds (\cref{tab:transfer}). The gap is the
+value of \emph{amortisation}: the neural head learns a shared map from
+narrative state to excitation parameters across all narratives, where
+independent fitting has only each narrative's handful of events.
 Interestingly, the learned score does not simply read back the injected latent
 $b_n$ (Spearman $-0.04$); it derives transfer propensity from observed
 temporal history, and retains its discrimination when both popularity and
@@ -912,10 +933,17 @@ artifacts for transparency.
 \subsection{Limitations and Negative Results}
 \label{sec:limitations}
 
-We report three honest limitations. (i) The multi-task objective dilutes the
-Hawkes head: with uniform Kendall weighting the neural model \emph{underperforms}
-the static MHP on timing (AUC 0.576); recovering the advantage requires
-up-weighting the Hawkes task ($10\times$). (ii) The bridge head's orientation is not identified by the likelihood on real
+We report the following limitations. (0) \textbf{Only two of the six
+architectural components are empirically load-bearing.} The TGN core and the
+cross-platform Hawkes head carry every result reported here; the SEIR-Z-D
+compartmental layer, the HMF bridge, the smooth Deffuant dynamics, and the
+dynamic influence score are \emph{specified and released as a simulation
+layer but not independently validated} in this paper. We flag this explicitly
+rather than letting the architecture diagram imply otherwise. (i) The
+multi-task objective dilutes the Hawkes head: with uniform Kendall weighting
+the neural model \emph{underperforms} the static MHP on timing (AUC 0.576);
+recovering the advantage requires up-weighting the Hawkes task ($10\times$).
+This is a tuning-sensitivity we did not resolve, only characterise. (ii) The bridge head's orientation is not identified by the likelihood on real
 data (\cref{sec:results}(4)); we resolve it with validation-split orientation,
 but a parameterisation that is sign-identified by construction (e.g.\ an
 orientation prior or anchored excitation) would be cleaner and remains future

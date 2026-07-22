@@ -2,6 +2,44 @@
 
 _Generated 2026-07-04. All numbers are reproducible via the commands at the bottom._
 
+## REVIEW RESPONSE — STEP 1: the baseline that decides everything
+
+Reviewer critique: "your headline baseline (static MHP) is 0.5 *by
+construction*, so beating it proves less than it looks like. Fit a
+**per-narrative** MHP — separate parameters per narrative, no graph/TGN
+conditioning. If the bridge score still beats it, you have a contribution."
+
+**Structural finding that shapes the whole comparison:** a narrative's
+pre-switch window (the only data a causal transfer predictor may use) contains
+events on a *single* platform by construction, with a median of **3 events**.
+So per-narrative fitting *cannot identify cross-platform α at all* — it can
+only characterise the narrative's own arrival dynamics. This is precisely the
+amortisation gap the neural head exists to close.
+
+**Fair protocol** (`evaluation/step1_fair_comparison.py`): both sides get
+exactly one validation-selected degree of freedom — the baseline picks its
+statistic *and* sign on validation, SimCity picks its head orientation on
+validation — then each is scored once on test.
+
+| Seed | Baseline (val-picked `rate`) | SimCity | Difference (95% CI) |
+|---|---|---|---|
+| 1 | 0.631 | 0.882 | **+0.250** [+0.172, +0.332] |
+| 2 | 0.631 | 0.673 | +0.042 [−0.029, +0.117] (n.s.) |
+| 3 | 0.631 | 0.779 | **+0.147** [+0.047, +0.251] |
+
+**Mean: SimCity 0.778 ± 0.104 vs. per-narrative 0.631.** Paired-bootstrap CI
+excludes zero on 2 of 3 seeds.
+
+**The honest caveat we report ourselves:** if the baseline is allowed to pick
+its statistic on the *test* labels (μ, the fitted background rate — an oracle
+upper bound unavailable in practice) it reaches **0.728**, inside SimCity's
+seed spread. So the advantage over per-narrative statistics is *real under a
+matched protocol but not large*, and we say so in the paper rather than
+resting on the degenerate static-MHP comparison.
+
+**Verdict: the central claim survives Step 1.** Everything downstream is now
+polish on a real result rather than a bet.
+
 ## DEFENSIBILITY PASS (multi-seed + transfer detection)
 
 **1. Multi-seed honesty on the next-platform AUC.** Rerun over seeds {1,2,3}
