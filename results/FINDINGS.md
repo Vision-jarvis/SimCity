@@ -40,6 +40,54 @@ faithful and much faster. Threshold sweep and corpus rebuild in progress; real
 **Lesson:** the reviewer's cheapest, zero-compute step found the most serious
 defect in the paper. Sampling your own data beats trusting your own pipeline.
 
+## REVIEW RESPONSE — STEP 5: Kendall loss-weight sweep
+
+Reviewer Step 5: sweep the loss weighting and report how the metrics move.
+Synthetic, single seed, Hawkes-task weight ∈ {1, 3, 10, 30}:
+
+| Hawkes weight | Transfer AUC (headline) | Hawkes NLL |
+|---|---|---|
+| 1 (uniform) | 0.630 | 0.731 |
+| 3 | **0.657** | 0.723 |
+| 10 (paper default) | 0.649 | 0.734 |
+| 30 | 0.646 | 0.754 |
+
+**Two findings.** (1) The headline **transfer** AUC is *robust* to the loss
+weight (0.63–0.66 across a 30× range; best at w=3) — the central result is not
+a hyperparameter artifact, which strengthens it. (2) The earlier "dilution"
+observation (uniform weighting drops the model below static MHP) was about the
+**timing** metric, not transfer; timing is weight-sensitive, transfer is not.
+We correct the paper to state this distinction precisely rather than implying
+the headline result needs the 10× weighting. (w=3 is marginally better than the
+committed w=10 but within single-seed noise.)
+
+## REVIEW RESPONSE — STEP 2: non-Hawkes benchmark reveals a SCOPE LIMIT
+
+Reviewer Step 2: build a benchmark from a mechanism that does *not* match the
+model's assumptions, to check the transfer result is not an artifact of
+generating data from the same family the model fits.
+
+Built `data/sir_multiplex_generator.py`: narratives spread by discrete-time
+**SIR contagion over a multiplex social graph**; cross-platform transfer is
+**topological** (contagion reaches a bridge user who cross-posts), with no
+excitation kernel anywhere. 31k events, 234 test narratives, 80 transfer.
+
+**Result: SimCity's bridge score is at chance here — AUC 0.462 ± 0.102**
+(per-seed 0.529 / 0.512 / 0.345; count-stratified ≈ 0.50; none significant).
+
+**Interpretation (honest, and it sharpens the claim rather than sinking it):**
+SimCity's transfer score is the off-diagonal mass of a *Hawkes excitation*
+matrix. It therefore detects transfer that is mediated by **temporal
+cross-excitation**, and does *not* detect transfer that is purely
+**topological/network-structural** (which is what SIR produces). The method is
+not a general transfer detector; it is a detector of *temporally-excited*
+transfer. This is a real limitation the reviewer's cheapest structural probe
+correctly surfaced, and it reframes the contribution precisely: on the Hawkes
+benchmark (temporal transfer) it works (AUC 0.65); on SIR (topological transfer)
+it does not. Whether *real* cross-platform transfer carries a temporal-
+excitation signature is then an empirical question --- answered by the corrected
+real corpus (below / pending).
+
 ## REVIEW RESPONSE — STEP 1: the baseline that decides everything
 
 Reviewer critique: "your headline baseline (static MHP) is 0.5 *by

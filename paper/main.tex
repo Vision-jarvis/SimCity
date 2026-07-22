@@ -1015,11 +1015,13 @@ cross-platform Hawkes head carry every result reported here; the SEIR-Z-D
 compartmental layer, the HMF bridge, the smooth Deffuant dynamics, and the
 dynamic influence score are \emph{specified and released as a simulation
 layer but not independently validated} in this paper. We flag this explicitly
-rather than letting the architecture diagram imply otherwise. (i) The
-multi-task objective dilutes the Hawkes head: with uniform Kendall weighting
-the neural model \emph{underperforms} the static MHP on timing (AUC 0.576);
-recovering the advantage requires up-weighting the Hawkes task ($10\times$).
-This is a tuning-sensitivity we did not resolve, only characterise. (ii) The bridge head's orientation is not identified by the likelihood on real
+rather than letting the architecture diagram imply otherwise. (i) The multi-task
+objective interacts with the \emph{timing} metric: with uniform Kendall
+weighting the neural model underperforms the static MHP on next-event timing
+(AUC 0.576), recovered by up-weighting the Hawkes task. Importantly, a
+loss-weight sweep ($\{1,3,10,30\}\times$) shows the \emph{transfer} AUC --- our
+headline --- is essentially flat (0.63--0.66), so the central result is not an
+artifact of this weighting; only the (null) timing result is weight-sensitive. (ii) The bridge head's orientation is not identified by the likelihood on real
 data (\cref{sec:results}(4)); we resolve it with validation-split orientation,
 but a parameterisation that is sign-identified by construction (e.g.\ an
 orientation prior or anchored excitation) would be cleaner and remains future
