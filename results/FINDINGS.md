@@ -2,6 +2,31 @@
 
 _Generated 2026-07-04. All numbers are reproducible via the commands at the bottom._
 
+## ★★ POSITIVE RESULT — what DOES predict real transfer (AUC 0.82, engagement-driven)
+
+The neural excitation score is at chance on real data (below), but real transfer
+is far from unpredictable. A logistic regression on 8 interpretable pre-switch
+features (`evaluation/real_transfer_predictors.py`, stratified 5-fold CV):
+
+| Predictor | CV ROC-AUC |
+|---|---|
+| SimCity bridge score (neural Hawkes) | 0.51 (chance) |
+| Popularity only (event count) | 0.65 ± 0.04 |
+| Engagement only (mean, max) | 0.81 ± 0.07 |
+| **All interpretable features** | **0.82 ± 0.05** |
+
+Univariate AUC per feature: **mean_engag 0.815, max_engag 0.808**, src_diversity
+0.659, n_events 0.652, duration 0.636, log_rate 0.630, burstiness 0.557,
+mean_gdelt 0.538.
+
+**Finding:** real narratives cross platforms when they draw **engagement early**,
+essentially independent of how their events cluster in time — the opposite of
+what a temporal-excitation model keys on, which is exactly why the neural score
+is at chance while a one-feature engagement model reaches 0.81. This is a strong,
+reproducible, interpretable baseline and it locates the phenomenon empirically:
+**cross-platform transfer is attention-driven, not excitation-driven.** Figures:
+`paper/figures/real_predictors.pdf`, `real_coefficients.pdf`.
+
 ## ★ DECISIVE CORRECTION — the real-data transfer result was an artifact (0.778 → 0.51 chance)
 
 After fixing the clustering bug (below) and re-deriving the real corpus over

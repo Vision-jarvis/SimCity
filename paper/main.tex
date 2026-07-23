@@ -76,13 +76,16 @@ cross-excitation (a controlled Hawkes benchmark, AUC $0.653 \pm 0.005$, robust
 to popularity and reach confounds, beating an independently-fitted per-narrative
 Hawkes baseline), but \emph{not} when transfer is topological (a non-Hawkes SIR
 benchmark, AUC $0.46$). Third --- our main empirical result on real data --- on
-a 32k-event live Hacker News + GDELT corpus with human-checkable narrative
-clusters, the excitation score is at chance ($0.51 \pm 0.02$) while narrative
-\emph{popularity} predicts transfer ($0.65$): real cross-platform transfer does
-not carry a temporal-excitation signature. We trace an earlier, much stronger
-real-data number to a clustering defect we caught by sampling our own data, and
-report the corrected result. We release the model, both generators, an
-accumulating live collector, and the evaluation suite.
+a 32k-event live Hacker News + GDELT corpus, the excitation score is at chance
+($0.51 \pm 0.02$): real cross-platform transfer carries no temporal-excitation
+signature. Yet it is far from unpredictable --- a logistic model on interpretable
+single-platform features predicts transfer at \textbf{ROC-AUC $0.82$}, driven
+almost entirely by \emph{early engagement} (a single engagement feature reaches
+$0.81$). Real narratives cross platforms when they draw attention early, not
+when their events cluster in time. We also report, as a cautionary result, an
+earlier much stronger neural number that a clustering defect --- caught by
+sampling our own data --- had inflated. We release the model, both generators,
+an accumulating live collector, and the full evaluation suite.
 \end{abstract}
 
 % =============================================================
@@ -135,13 +138,16 @@ Our contributions:
     protocol giving both sides one validation-selected degree of freedom. On a
     non-Hawkes SIR benchmark, where transfer is topological, the same score is
     at chance ($0.46$), delimiting exactly what the method captures.
-  \item \textbf{Real cross-platform transfer is not temporally excited
-    (\cref{sec:results}(4)).} On a live Hacker News + GDELT corpus with
-    human-checkable clusters, the excitation score is at chance
-    ($0.51 \pm 0.02$) while narrative popularity predicts transfer ($0.65$).
-    We report how an earlier, far stronger real-data number ($0.78$) turned
-    out to be an artifact of a clustering defect we found by sampling our own
-    data --- a cautionary result in its own right.
+  \item \textbf{What \emph{does} predict real transfer
+    (\cref{sec:results}(4)).} On a live Hacker News + GDELT corpus the neural
+    excitation score is at chance ($0.51 \pm 0.02$), but transfer is highly
+    predictable from interpretable single-platform features: a logistic model
+    reaches ROC-AUC $0.82$, driven by \emph{early engagement} (0.81 as a lone
+    feature) rather than temporal-clustering structure. This characterises
+    real cross-platform transfer as attention-driven, and gives a strong,
+    reproducible baseline for the task. We also disclose how a clustering
+    defect --- caught by sampling our own data --- had inflated an earlier
+    neural number, a cautionary result in its own right.
   \item \textbf{Released artifacts and an honest scope statement.} We release
     two generative benchmarks (one deliberately \emph{not} Hawkes-based), an
     accumulating live collector, and the full evaluation suite, and state
@@ -982,18 +988,70 @@ transfer is popularity- and topology-driven rather than temporally excited ---
 exactly the regime in which \cref{sec:results}(3) predicts our method should
 fail.
 
-We arrived at this conclusion by correcting our own error, which we report as a
-cautionary result. An earlier version of this corpus reported AUC
+\paragraph{(5) What does predict real transfer
+(\cref{fig:real-pred}, \cref{tab:real-pred}).} That the neural score fails does
+not mean transfer is unpredictable. We fit a logistic-regression classifier on
+eight interpretable features computed causally from each narrative's
+single-platform (pre-switch) window --- volume, rate, duration, burstiness,
+source diversity, mean/max engagement, and exogenous-volume proxy --- and
+evaluate by stratified 5-fold cross-validation. The full model reaches
+\textbf{ROC-AUC $0.82 \pm 0.05$}, and the signal is concentrated in
+\emph{engagement}: mean and max log-engagement each reach $\approx 0.81$ as
+\emph{single} features, whereas raw popularity (event count) reaches only
+$0.65$ and burstiness/timing features barely exceed chance. Real narratives
+cross platforms when they attract engagement early, essentially independent of
+how their events cluster in time --- the opposite of what a temporal-excitation
+model keys on, which is precisely why the neural score is at chance here while a
+one-feature engagement model is not. This is a strong, reproducible, and
+interpretable baseline for cross-platform transfer prediction, and it locates
+the phenomenon empirically: transfer is attention-driven, not
+excitation-driven.
+
+\paragraph{A cautionary result.} We reached the negative neural finding by
+correcting our own error. An earlier version of this corpus reported AUC
 $0.78 \pm 0.10$. Following the reviewer-style protocol of \emph{sampling our own
-clusters and reading them}, we found that a defect in our greedy clusterer ---
-once a cluster-count cap was hit, remaining items were assigned to their nearest
-centroid \emph{regardless of similarity} --- had merged unrelated HN stories and
-news articles into single ``narratives'' (only 2--3\% of cross-source pairs
-exceeded a 0.5 title-embedding cosine). The $0.78$ was measured over these
-spurious narratives. With the clusterer corrected (no forced assignment;
-time-windowed clusters; $\sim$84\% cross-source pair precision by embedding
-proxy), the effect disappears. The synthetic results are unaffected, as
-narrative identity there is ground truth by construction.
+clusters and reading them}, we found a defect in our greedy clusterer --- once a
+cluster-count cap was hit, remaining items were assigned to their nearest
+centroid \emph{regardless of similarity} --- which had merged unrelated HN
+stories and news articles into single ``narratives'' (only 2--3\% of
+cross-source pairs exceeded a 0.5 title-embedding cosine). The $0.78$ was
+measured over these spurious narratives. With the clusterer corrected (no forced
+assignment; time-windowed clusters; $\sim$84\% cross-source pair precision by
+embedding proxy) the neural effect disappears while the engagement result above
+holds. The synthetic results are unaffected, as narrative identity there is
+ground truth by construction. We report this in full because it is the kind of
+failure that peer review rarely catches but reproducibility should.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/real_predictors.pdf}\\[4pt]
+\includegraphics[width=\linewidth]{figures/real_coefficients.pdf}
+\caption{\textbf{What predicts real cross-platform transfer.} \emph{Top:}
+5-fold CV ROC-AUC. The neural excitation score is at chance; interpretable
+single-platform features reach 0.82. \emph{Bottom:} univariate ROC-AUC per
+feature (each alone). Early engagement is the dominant signal ($\approx 0.81$);
+raw volume and timing/burstiness features are far weaker. Transfer is
+attention-driven, not excitation-driven.}
+\label{fig:real-pred}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{Predicting real transfer} (corrected corpus; 4{,}904 test
+narratives, 85 transfer; stratified 5-fold CV).}
+\label{tab:real-pred}
+\begin{tabular}{lc}
+\toprule
+\textbf{Predictor} & \textbf{CV ROC-AUC} \\
+\midrule
+SimCity bridge score (neural Hawkes) & $0.51$ (chance) \\
+Popularity only (event count)        & $0.65 \pm 0.04$ \\
+Engagement only (mean, max)          & $0.81 \pm 0.07$ \\
+All interpretable features           & $\mathbf{0.82 \pm 0.05}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Limitations and Negative Results}
 \label{sec:limitations}

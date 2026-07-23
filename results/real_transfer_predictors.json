@@ -1,0 +1,46 @@
+{
+  "n_narratives": 4904,
+  "n_transfer": 85,
+  "feature_sets": {
+    "popularity only (n_events)": {
+      "auc_mean": 0.6519605181817559,
+      "auc_std": 0.03552409288860209,
+      "features": [
+        "n_events"
+      ]
+    },
+    "engagement only (mean+max)": {
+      "auc_mean": 0.8141136119912475,
+      "auc_std": 0.0695916431596037,
+      "features": [
+        "mean_engag",
+        "max_engag"
+      ]
+    },
+    "all interpretable features": {
+      "auc_mean": 0.8228106526797841,
+      "auc_std": 0.04811162388297364,
+      "features": [
+        "n_events",
+        "log_rate",
+        "duration_h",
+        "burstiness",
+        "src_diversity",
+        "mean_engag",
+        "max_engag",
+        "mean_gdelt"
+      ]
+    }
+  },
+  "univariate_auc": {
+    "mean_engag": 0.8152325964625319,
+    "max_engag": 0.8077768148139106,
+    "src_diversity": 0.659120149408591,
+    "n_events": 0.6521489691539616,
+    "duration_h": 0.6357543058725876,
+    "log_rate": 0.629503314087619,
+    "burstiness": 0.5570303821881523,
+    "mean_gdelt": 0.5376829461811702
+  },
+  "simcity_bridge_auc": 0.5133759750009156
+}

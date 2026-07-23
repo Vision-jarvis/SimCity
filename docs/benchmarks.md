@@ -21,13 +21,18 @@ This document is the reproduction guide for every number in `main.tex` and
      results/simcity_val_preds_<tag>.npz`. Popularity baseline is
      anti-predictive (0.424). See `results/narrative_transfer_real.md`. Gate
      corpus readiness with `python scripts/count_transfer_cases.py`.
-2. **Honest negative result:** raw engagement-magnitude regression is
-   noise-dominated under near-critical cascade dynamics. Even an *oracle*
-   handed the true excitation feature has negative residual skill (−0.107) and
-   near-random surge-ranking AUC (0.507). Don't headline MAE on this task.
-3. **Supporting:** next-platform timing AUC 0.610 ± 0.005 vs static MHP
-   0.605 — above the baseline on every seed but not significant at n=3
-   (p = 0.23).
+2. **Scope limit (non-Hawkes SIR benchmark):** when transfer is topological
+   rather than temporal, the excitation score is at chance (0.46). The method
+   detects *temporally-excited* transfer only.
+3. **Real data — the excitation score is at chance (0.51),** but transfer is
+   predictable: an interpretable **engagement** model reaches **AUC 0.82**
+   (`evaluation/real_transfer_predictors.py`). Real cross-platform transfer is
+   attention-driven, not excitation-driven.
+4. **Honest negative result:** raw engagement-magnitude *regression* is
+   noise-dominated (oracle residual skill −0.107). Predict the transfer
+   *event*, not the count.
+5. **The earlier real-data neural AUC (0.78) was a clustering-bug artifact** —
+   see the ⚠ warning under "Real multiplex corpus".
 
 Full narrative with every intermediate experiment: [`results/FINDINGS.md`](../results/FINDINGS.md).
 
@@ -124,6 +129,7 @@ scores `alpha_off`) and `..._<tag>_hawkes.npz` (causal per-event intensities).
 | `evaluation/platform_prediction_eval.py --data <pkl>` | Which platform fires next, from λ_i(t)? incl. transition-only slice | `results/platform_prediction.{md,json}` |
 | `evaluation/compute_residual_metrics.py` | Within-narrative residual skill (isolates temporal signal from reach) | `results/residual_metrics.{md,json}` |
 | `evaluation/burst_ranking_eval.py` | Surge ranking AUC/AP incl. oracle ceiling | `results/burst_ranking.{md,json}` |
+| `evaluation/real_transfer_predictors.py` | **What predicts real transfer**: interpretable feature model (engagement → AUC 0.82) vs neural score | `results/real_transfer_predictors.{md,json}` |
 | `evaluation/per_narrative_mhp_baseline.py` | **The decisive baseline**: per-narrative Hawkes MLE (no graph conditioning) | `results/per_narrative_mhp_baseline.{md,json}` |
 | `evaluation/step1_fair_comparison.py` | Baseline vs SimCity with one validation-selected d.o.f. each + paired bootstrap | `results/step1_fair_comparison.{md,json}` |
 | `evaluation/narrative_cluster_quality.py` | Are clusters real narratives? Samples pairs for **human** labelling | `results/cluster_labelling_*.csv` |
