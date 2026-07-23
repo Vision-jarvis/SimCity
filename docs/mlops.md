@@ -1,6 +1,6 @@
 # MLOps Lifecycle
 
-SimCity's training lifecycle is built so it runs **anywhere** — with a
+SimCity's training lifecycle is built so it runs **anywhere**, with a
 self-hosted MLflow server when available, and a transparent local JSON store
 when not (CI, offline, no-server dev).
 
@@ -64,7 +64,7 @@ mlflow server --host 0.0.0.0 --port 5000   # self-hosted, free
 ```
 
 With those set, `ExperimentTracker`/`ModelRegistry` automatically use MLflow
-instead of the local store — no code changes.
+instead of the local store, no code changes.
 
 ## Wiring real training metrics
 

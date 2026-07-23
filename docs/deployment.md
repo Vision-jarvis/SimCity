@@ -54,8 +54,8 @@ See `.env.example` for all required variables.
 
 ### Container Images
 The stack builds from two Dockerfiles:
-- `Dockerfile` — API (CPU-only PyTorch, sized for free-tier inference).
-- `frontend/Dockerfile` — multi-stage Next.js production build.
+- `Dockerfile`, API (CPU-only PyTorch, sized for free-tier inference).
+- `frontend/Dockerfile`, multi-stage Next.js production build.
 
 ```bash
 docker build -t simcity-api:latest .
@@ -77,9 +77,9 @@ terraform output service_urls
 kubectl apply -k infra/k8s
 ```
 
-- `infra/terraform/` — OCI VM, VCN, security list, cloud-init k3s install.
-- `infra/k8s/` — kustomize manifests: Kafka, Neo4j (PVC), Redis, API (probes), frontend (NodePort).
-- `infra/helm/values.yaml` — single tunable surface for a Helm-based install.
+- `infra/terraform/`, OCI VM, VCN, security list, cloud-init k3s install.
+- `infra/k8s/`, kustomize manifests: Kafka, Neo4j (PVC), Redis, API (probes), frontend (NodePort).
+- `infra/helm/values.yaml`, single tunable surface for a Helm-based install.
 
 Estimated monthly cost: **$0** (entirely within OCI Always-Free allowances).
 
@@ -107,8 +107,8 @@ Validate against the scalability targets in `internet twin.md`
 ### Grafana
 - URL: `http://localhost:3001`
 - Dashboards: `monitoring/grafana/dashboards/`
-  - `simcity_overview.json` — API rate, simulations, Kafka lag, Neo4j health.
-  - `model_performance.json` — virality MAE, Hawkes NLL, inference latency p95, drift, model staleness.
+  - `simcity_overview.json`, API rate, simulations, Kafka lag, Neo4j health.
+  - `model_performance.json`, virality MAE, Hawkes NLL, inference latency p95, drift, model staleness.
 - Default login: admin/admin
 
 ### Alerts

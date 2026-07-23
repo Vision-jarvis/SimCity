@@ -1,6 +1,6 @@
 # 🌐 AI Digital Twin of the Internet
 
-> A real-time autonomous simulation engine for internet behavior, virality, influence cascades, and collective dynamics — built entirely on free and open-source infrastructure.
+> A real-time autonomous simulation engine for internet behavior, virality, influence cascades, and collective dynamics, built entirely on free and open-source infrastructure.
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## 🚀 Project Overview
 
-This platform is a **live computational mirror of the internet** — a distributed AI system that ingests real-time internet data, builds a dynamic knowledge graph, runs multi-agent simulations, and forecasts viral trends, misinformation outbreaks, and collective sentiment shifts.
+This platform is a **live computational mirror of the internet**, a distributed AI system that ingests real-time internet data, builds a dynamic knowledge graph, runs multi-agent simulations, and forecasts viral trends, misinformation outbreaks, and collective sentiment shifts.
 
 Think: **SimCity for the Internet, powered by AI.**
 
@@ -51,11 +51,11 @@ majority of it. Highlights and divergences from the plan below:
 - 7 ingesters: Reddit, Hacker News, GDELT, RSS, YouTube, **Wikipedia**, **Bluesky** (AT Protocol).
 - NLP suite: embeddings, topic, sentiment, toxicity, stance, misinformation, summarizer.
 - Graph engine: Neo4j client (degrades gracefully when offline), node/edge types, Louvain, PageRank/betweenness.
-- Modeling core under `models/`: Temporal Graph Network, neural Hawkes cross-platform excitation, virality head, Deffuant opinion dynamics, HMF bridge — plus `ml/forecasting/` and Hawkes baselines.
+- Modeling core under `models/`: Temporal Graph Network, neural Hawkes cross-platform excitation, virality head, Deffuant opinion dynamics, HMF bridge, plus `ml/forecasting/` and Hawkes baselines.
 - **MLOps** (`ml/training/`, `ml/registry/`): MLflow tracking + model registry + drift-gated retraining (local-JSON fallback when MLflow absent), nightly `retrain.yml`.
 - Simulation: SEIR-Z-D engine, LangGraph multi-agent runtime (Influencer/Bot/Skeptic/Community/News), scenario presets, and a **counterfactual intervention simulator** (`simulation/intervention.py`).
 - **Cross-platform narrative-transfer detection** (`analysis_tools/narrative_tracker.py`).
-- **Empirical validation suite**: reproducible benchmarks with multi-seed statistics and confound controls, plus a live accumulating HN+GDELT corpus (32k events) — headline: per-narrative transfer detection AUC 0.653 ± 0.005 on the controlled benchmark and **0.778 ± 0.104 on real data** (validation-oriented, every seed significant); see `docs/benchmarks.md` and `results/FINDINGS.md`.
+- **Empirical validation suite**: reproducible benchmarks with multi-seed statistics and confound controls, plus a live accumulating HN+GDELT corpus (32k events), headline: per-narrative transfer detection AUC 0.653 ± 0.005 on the controlled benchmark and **0.778 ± 0.104 on real data** (validation-oriented, every seed significant); see `docs/benchmarks.md` and `results/FINDINGS.md`.
 - FastAPI (REST + GraphQL + WebSocket), Next.js frontend (Dashboard, Graph3D, Simulate, Intervention, Trends, Narratives).
 - Infra: Dockerfiles, Terraform (OCI Always-Free) + k3s manifests + Helm, Prometheus/Grafana, Locust load test, 5 Colab notebooks.
 
@@ -96,16 +96,16 @@ Every component in this project uses **free, open-source, or free-tier** service
 | RSS feeds | Any public RSS (free) |
 | Wikipedia trends | Wikimedia API (free) |
 | YouTube | YouTube Data API v3 (10,000 free units/day) |
-| Twitter/X | **No free API** — use **Bluesky** (AT Protocol public AppView, free, no key) as the social signal |
+| Twitter/X | **No free API**, use **Bluesky** (AT Protocol public AppView, free, no key) as the social signal |
 
 ### ML Models (Free)
 
 | Model Type | Free Option |
 |---|---|
-| Text embeddings | `sentence-transformers` (all-MiniLM-L6-v2, BGE-small) — run locally |
+| Text embeddings | `sentence-transformers` (all-MiniLM-L6-v2, BGE-small), run locally |
 | LLM inference | Ollama (local), Groq free tier (6000 tokens/min), Together AI free credits |
-| NLP tasks | `transformers` (HuggingFace) — run locally or on Colab |
-| Graph ML | PyG (PyTorch Geometric) — fully open source |
+| NLP tasks | `transformers` (HuggingFace), run locally or on Colab |
+| Graph ML | PyG (PyTorch Geometric), fully open source |
 
 ### Estimated Monthly Cost: **$0**
 
@@ -438,7 +438,7 @@ ai-digital-twin/
 
 ## 🗺️ Roadmap
 
-### Phase 0 — Foundation (Weeks 1–2)
+### Phase 0, Foundation (Weeks 1–2)
 > Goal: Repo, dev environment, data flowing, basic graph up.
 
 - [x] Initialize repository, set up `.env.example`, `docker-compose.yml`
@@ -455,7 +455,7 @@ ai-digital-twin/
 
 ---
 
-### Phase 1 — NLP Intelligence (Weeks 3–4)
+### Phase 1, NLP Intelligence (Weeks 3–4)
 > Goal: Every incoming post enriched with NLP metadata.
 
 - [x] BERTopic topic modeling on incoming posts
@@ -471,7 +471,7 @@ ai-digital-twin/
 
 ---
 
-### Phase 2 — Graph Intelligence (Weeks 5–7)
+### Phase 2, Graph Intelligence (Weeks 5–7)
 > Goal: Live, evolving internet knowledge graph.
 
 - [x] Build graph update pipeline (Kafka consumer → Neo4j writer)
@@ -488,24 +488,24 @@ ai-digital-twin/
 
 ---
 
-### Phase 3 — GNN & Forecasting (Weeks 8–11)
+### Phase 3, GNN & Forecasting (Weeks 8–11)
 > Goal: Predict virality and cascade propagation.
 
-- [x] Implement Temporal GNN for influence spread (PyG) — `models/tgn_core.py`
+- [x] Implement Temporal GNN for influence spread (PyG), `models/tgn_core.py`
 - [x] Train virality classifier (`models/virality_head.py`, `train.py`)
 - [x] Graph attention for high-impact nodes (TransformerConv in TGN + influence scorer)
 - [x] Build diffusion model for idea propagation (Hawkes + SEIR-Z-D + Deffuant)
 - [ ] Implement Temporal Fusion Transformer (forecaster is analytical Hawkes-SEIR, not TFT)
-- [x] Build trend prediction pipeline (next 6h/24h/72h) — `ml/forecasting/`
+- [x] Build trend prediction pipeline (next 6h/24h/72h), `ml/forecasting/`
 - [x] Set up MLflow for experiment tracking (`ml/training/`, `ml/registry/`)
-- [x] Build scheduled retraining pipeline (GitHub Actions nightly) — `retrain.yml`
-- [x] Model evaluation dashboard (Grafana) — `monitoring/grafana/dashboards/model_performance.json`
+- [x] Build scheduled retraining pipeline (GitHub Actions nightly), `retrain.yml`
+- [x] Model evaluation dashboard (Grafana), `monitoring/grafana/dashboards/model_performance.json`
 
 **Milestone:** Virality score + predicted reach for any incoming topic.
 
 ---
 
-### Phase 4 — Simulation Engine (Weeks 12–15)
+### Phase 4, Simulation Engine (Weeks 12–15)
 > Goal: Run "what-if" internet scenarios.
 
 - [x] Implement base agent class with behavioral parameters
@@ -516,13 +516,13 @@ ai-digital-twin/
 - [x] Simulation output: propagation map, virality curve, polarization delta
 - [x] Simulation result caching and replay
 - [x] Simulation API endpoints (`/simulate/run`, `/simulate/replay`)
-- [x] **Counterfactual intervention simulator** (`/simulate/intervention`) — baseline vs. what-if
+- [x] **Counterfactual intervention simulator** (`/simulate/intervention`), baseline vs. what-if
 
 **Milestone:** Fully runnable "what-if" scenarios with multi-agent dynamics.
 
 ---
 
-### Phase 5 — Frontend Visualization (Weeks 16–19)
+### Phase 5, Frontend Visualization (Weeks 16–19)
 > Goal: Make it visually stunning and interactive.
 
 - [x] Set up Next.js project with Tailwind + Zustand
@@ -538,17 +538,17 @@ ai-digital-twin/
 
 ---
 
-### Phase 6 — Production Hardening (Weeks 20–22)
+### Phase 6, Production Hardening (Weeks 20–22)
 > Goal: Reliable, monitored, deployable system.
 
-- [x] Deploy to Oracle Cloud Free Tier (Terraform + k3s) — `infra/`
+- [x] Deploy to Oracle Cloud Free Tier (Terraform + k3s), `infra/`
 - [x] Set up Prometheus metrics across all services
 - [x] Build Grafana dashboards (overview + model performance)
 - [x] Configure alerting rules (`monitoring/alerts/rules.yml`)
-- [x] Load testing (Locust) — `scripts/locustfile.py`
+- [x] Load testing (Locust), `scripts/locustfile.py`
 - [ ] Security audit (auth, rate limiting, secrets management)
 - [x] Full README and API documentation (`docs/`)
-- [x] Create 5 demo notebooks (Colab-ready) — `notebooks/`
+- [x] Create 5 demo notebooks (Colab-ready), `notebooks/`
 
 **Milestone:** Production-grade, monitored, zero-cost deployment.
 
@@ -831,7 +831,7 @@ See `docs/contributing.md` for full guidelines.
 
 ## 📜 License
 
-MIT License — free to use, modify, and distribute.
+MIT License, free to use, modify, and distribute.
 
 ---
 
@@ -845,9 +845,9 @@ This project is not a typical ML portfolio project. It shows:
 - **Multi-agent simulation** with LangGraph and Ray
 - **Production MLOps** with MLflow, automated retraining, drift monitoring
 - **Full-stack AI deployment** from data ingestion to 3D visualization
-- **Zero-cost engineering** — knowing how to build serious systems without blowing budgets
+- **Zero-cost engineering**, knowing how to build serious systems without blowing budgets
 
-> "I can engineer internet-scale AI systems — and I can do it for free."
+> "I can engineer internet-scale AI systems, and I can do it for free."
 
 ---
 

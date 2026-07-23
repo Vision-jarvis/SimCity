@@ -1,4 +1,4 @@
-# Cross-platform next-event prediction — SYNTHETIC (Hawkes-branching) data
+# Cross-platform next-event prediction, SYNTHETIC (Hawkes-branching) data
 
 Causal / leak-free. Random acc=0.333, AUC=0.5.
 

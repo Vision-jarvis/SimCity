@@ -1,6 +1,6 @@
 # Narrative transfer detection (which narratives jump platforms?)
 
-Test narratives: 259 | transferred: 166 (64.1%). Scores computed only from pre-switch (single-platform) events — causal.
+Test narratives: 259 | transferred: 166 (64.1%). Scores computed only from pre-switch (single-platform) events, causal.
 
 | Scorer | AUC |
 |---|---|

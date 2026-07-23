@@ -19,7 +19,7 @@ This repository currently implements the modeling core of that vision: a tempora
 - `paper/` contains the research paper in **ACL format** (theory + empirical
   validation; see `results/FINDINGS.md` and `docs/benchmarks.md`):
   `main.tex`, `references.bib`, ACL style files, `figures/`, the compiled
-  `SimCity-ACL-preprint.pdf`, and `SimCity-paper-overleaf.zip` — upload the
+  `SimCity-ACL-preprint.pdf`, and `SimCity-paper-overleaf.zip`, upload the
   zip directly to Overleaf (pdfLaTeX) or compile locally with
   `tectonic main.tex` from inside `paper/`. Switch the
   `\usepackage[preprint]{acl}` option to `review` for anonymous submission or
@@ -27,7 +27,7 @@ This repository currently implements the modeling core of that vision: a tempora
 - `data/build_real_dataset.py` builds an accumulating real HN+GDELT corpus.
 - `evaluation/` holds the evaluation suite (narrative transfer, next-platform
   timing, residual/temporal metrics, burst ranking, multi-seed statistics, and
-  the benchmark-table aggregator) — run each as
+  the benchmark-table aggregator), run each as
   `python -m evaluation.<name>` from the repo root.
 
 ## Features Implemented
@@ -134,11 +134,11 @@ python data/synthetic_generator.py --events 10000 --narratives 320 --out data/sy
 
 The roadmap's Phase 3 (MLOps) and Phase 6 (production hardening) scaffolding are now in place:
 
-- `ml/registry/model_registry.py` — MLflow-backed model registry with a zero-dependency local JSON fallback (register, stage promotion, production lookup).
-- `ml/training/pipeline.py` — `ExperimentTracker` (MLflow or local) + `TrainingPipeline` that logs params/metrics/artifacts and auto-promotes a run when it beats the current Production model.
-- `ml/training/scheduler.py` — `RetrainingScheduler` with drift detection (performance-degradation + staleness gates).
-- `run_training_pipeline.py` — CLI: `train` and `schedule` subcommands (use `--demo` to exercise the full track→register→promote flow without PyTorch Geometric).
-- `.github/workflows/retrain.yml` — nightly drift-check + conditional retrain.
+- `ml/registry/model_registry.py`, MLflow-backed model registry with a zero-dependency local JSON fallback (register, stage promotion, production lookup).
+- `ml/training/pipeline.py`, `ExperimentTracker` (MLflow or local) + `TrainingPipeline` that logs params/metrics/artifacts and auto-promotes a run when it beats the current Production model.
+- `ml/training/scheduler.py`, `RetrainingScheduler` with drift detection (performance-degradation + staleness gates).
+- `run_training_pipeline.py`, CLI: `train` and `schedule` subcommands (use `--demo` to exercise the full track→register→promote flow without PyTorch Geometric).
+- `.github/workflows/retrain.yml`, nightly drift-check + conditional retrain.
 
 Run the MLOps demo (no GPU / PyG required):
 
@@ -150,11 +150,11 @@ python run_training_pipeline.py schedule --observed-mae 0.55 --demo
 Deployment artifacts:
 
 - `Dockerfile` (API, CPU-only) and `frontend/Dockerfile` (multi-stage Next.js).
-- `infra/terraform/` — Oracle Cloud Always-Free VM + k3s bootstrap (4 OCPU / 24 GB, $0).
-- `infra/k8s/` — kustomize manifests (Kafka, Neo4j, Redis, API, frontend); apply with `kubectl apply -k infra/k8s`.
-- `infra/helm/values.yaml` — Helm configuration surface.
-- `scripts/locustfile.py` — Locust load test (`locust -f scripts/locustfile.py --host http://localhost:8000`).
-- `monitoring/grafana/dashboards/model_performance.json` — model latency/MAE/drift dashboard.
+- `infra/terraform/`, Oracle Cloud Always-Free VM + k3s bootstrap (4 OCPU / 24 GB, $0).
+- `infra/k8s/`, kustomize manifests (Kafka, Neo4j, Redis, API, frontend); apply with `kubectl apply -k infra/k8s`.
+- `infra/helm/values.yaml`, Helm configuration surface.
+- `scripts/locustfile.py`, Locust load test (`locust -f scripts/locustfile.py --host http://localhost:8000`).
+- `monitoring/grafana/dashboards/model_performance.json`, model latency/MAE/drift dashboard.
 
 See [infra/README.md](./infra/README.md) for the full deploy walkthrough.
 
@@ -170,7 +170,7 @@ Intervention types: `fact_check`, `counter_narrative`, `deplatform_bots`, `rate_
 
 ## Data Sources
 
-Seven ingesters under `ingestion/sources/`: Reddit, Hacker News, GDELT, RSS, YouTube, **Wikipedia** (Wikimedia recent-changes — live edit activity), and **Bluesky** (AT Protocol public AppView — reliable, key-optional; the dependable free X-alternative). All are key-optional or free-tier. See [docs/data-sources.md](docs/data-sources.md).
+Seven ingesters under `ingestion/sources/`: Reddit, Hacker News, GDELT, RSS, YouTube, **Wikipedia** (Wikimedia recent-changes, live edit activity), and **Bluesky** (AT Protocol public AppView, reliable, key-optional; the dependable free X-alternative). All are key-optional or free-tier. See [docs/data-sources.md](docs/data-sources.md).
 
 ## Demo Notebooks
 
@@ -185,17 +185,17 @@ narrative). Headline findings:
 
 - **Narrative transfer detection (headline, established on the controlled
   benchmark):** SimCity's per-narrative cross-platform excitation ("bridge
-  score") predicts *which* narratives will jump platforms — AUC
+  score") predicts *which* narratives will jump platforms, AUC
   **0.653 ± 0.005** (3 seeds, p < 1.1e-4, robust to popularity and reach
   confounds). A static Hawkes process is random at this task *by construction*.
   **Validated on real data:** on the live 32k-event HN+GDELT corpus, after
   resolving a diagnosed sign non-identifiability of the bridge head with
   leakage-free validation-split orientation, the oriented transfer AUC is
   **0.778 ± 0.104** over three seeds (0.882/0.673/0.779, every seed
-  p ≤ 1.2e-8, survives count stratification) — against an *anti-predictive*
+  p ≤ 1.2e-8, survives count stratification), against an *anti-predictive*
   popularity baseline (0.424).
 - **Honest negative result:** raw engagement-magnitude regression is
-  noise-dominated under near-critical cascades — even an oracle handed the true
+  noise-dominated under near-critical cascades, even an oracle handed the true
   excitation feature has negative residual skill. Timing/transfer metrics are
   the right evaluation, not MAE.
 - **Real-data collector:** `data/build_real_dataset.py` pulls live Hacker News

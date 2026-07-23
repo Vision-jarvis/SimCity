@@ -56,8 +56,8 @@
 - **Purpose**: Quantifies opinion polarization using Esteban-Ray index, bimodality, echo chamber metrics
 
 ## Baselines
-- **Static MHP**: `baselines/mhp.py` — Multivariate Hawkes Process
-- **Static GNN**: `baselines/static_gnn.py` — Fixed-topology GCN baseline
+- **Static MHP**: `baselines/mhp.py`, Multivariate Hawkes Process
+- **Static GNN**: `baselines/static_gnn.py`, Fixed-topology GCN baseline
 
 ## MLOps (Training, Tracking & Retraining)
 

@@ -20,11 +20,11 @@ All events are normalized to:
 
 ```json
 {
-  "id": "platform_uniqueId",
-  "platform": 0,
-  "timestamp": 1700000000.0,
-  "author": "username",
-  "content": "text content",
+  "id": "platform_uniqueId"
+  "platform": 0
+  "timestamp": 1700000000.0
+  "author": "username"
+  "content": "text content"
   "metadata": { ... }
 }
 ```
@@ -62,12 +62,12 @@ All events are normalized to:
 - **Config**: `WIKIPEDIA_API_URL`
 
 ## Bluesky (AT Protocol)
-- **Source**: public AppView — https://public.api.bsky.app
+- **Source**: public AppView, https://public.api.bsky.app
 - **Modes**:
   - **Public (no key):** follows configured accounts via `app.bsky.feed.getAuthorFeed` (open, verified working keyless).
-  - **Authenticated (optional app password):** additionally runs `app.bsky.feed.searchPosts` for query discovery — *search requires auth on Bluesky*.
+  - **Authenticated (optional app password):** additionally runs `app.bsky.feed.searchPosts` for query discovery, *search requires auth on Bluesky*.
 - **Fields**: post text, author handle, like/repost/reply counts, post URI
 - **Cost**: $0. No key for the public path. App password (optional, higher limits + search): https://bsky.app/settings/app-passwords
-- **Config**: `BLUESKY_APPVIEW_URL`, `BLUESKY_PDS_URL`, `BLUESKY_ACTORS` (public),
+- **Config**: `BLUESKY_APPVIEW_URL`, `BLUESKY_PDS_URL`, `BLUESKY_ACTORS` (public)
   `BLUESKY_QUERIES` (search), optional `BLUESKY_IDENTIFIER` / `BLUESKY_APP_PASSWORD`
 - **Why**: stable, key-optional social signal (the dependable free X-alternative)
