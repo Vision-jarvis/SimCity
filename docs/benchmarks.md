@@ -132,7 +132,8 @@ scores `alpha_off`) and `..._<tag>_hawkes.npz` (causal per-event intensities).
 | `evaluation/real_transfer_predictors.py` | **What predicts real transfer**: interpretable feature model (engagement → AUC 0.82) vs neural score | `results/real_transfer_predictors.{md,json}` |
 | `evaluation/per_narrative_mhp_baseline.py` | **The decisive baseline**: per-narrative Hawkes MLE (no graph conditioning) | `results/per_narrative_mhp_baseline.{md,json}` |
 | `evaluation/step1_fair_comparison.py` | Baseline vs SimCity with one validation-selected d.o.f. each + paired bootstrap | `results/step1_fair_comparison.{md,json}` |
-| `evaluation/narrative_cluster_quality.py` | Are clusters real narratives? Samples pairs for **human** labelling | `results/cluster_labelling_*.csv` |
+| `evaluation/narrative_cluster_quality.py` | Are clusters real narratives? (method comparison; automated proxy) | `results/narrative_cluster_quality.{md,json}` |
+| `scripts/score_cluster_labels.py` | Scores **human** cluster-precision labels (fill `same_event_human` in `results/cluster_labelling_corrected.csv`) | `results/cluster_precision.json` |
 | `analysis_tools/oracle_residual_check.py` | Is the magnitude target learnable at all? (oracle upper bound) | stdout |
 | `evaluation/run_benchmarks.py` | Aggregate main table (naive / static GNN / vanilla TGN / SimCity) | `results/benchmark_table.{md,json}` |
 | `baselines/run_virality_baselines.py --epochs 15` | Trains the Vanilla-TGN and Static-GNN baselines on identical splits | `results/graph_baselines.json` |
