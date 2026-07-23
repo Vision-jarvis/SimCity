@@ -53,7 +53,6 @@ def narrative_features(df):
     for dst, g in d.groupby("dst"):
         g = g.sort_values("t")
         p = g["platform"].to_numpy()
-        tt = g["t"].to_numpy(float)
         sw = np.where(p != p[0])[0]
         if sw.size and sw[0] == 0:
             continue
