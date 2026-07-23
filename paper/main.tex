@@ -51,9 +51,7 @@
 % -------------------------------------------------------
 \title{Which Narratives Cross Platforms? \\ Narrative-Conditioned Hawkes
   Processes for Cross-Platform Transfer Prediction}
-\author{Anonymous Author(s) \\
-  Affiliation \\
-  \texttt{email@example.org}}
+\author{Anonymous Author(s)}
 % -------------------------------------------------------
 
 \begin{document}
@@ -173,10 +171,11 @@ DyRep~\citep{trivedi2019dyrep} drives embeddings with a two-time-scale point
 process, TGAT~\citep{xu2020tgat} introduces functional time encoding for
 temporal attention, and TGN~\citep{rossi2020temporal} unifies these with a
 memory module, which we adopt as our structural backbone. These models are
-trained for link-level prediction; they contain no population-level infection
-dynamics and no mechanism for platform-to-platform transfer, which is precisely
-the gap SimCity's HMF bridge (\cref{sec:hmf}) and cross-platform Hawkes head
-(\cref{sec:hawkes}) address.
+trained for link-level prediction and carry no mechanism for platform-to-platform
+transfer. Our validated use of a TGN is narrow: its memory conditions the
+cross-platform Hawkes head (\cref{sec:hawkes}) that carries our results. The
+compartmental HMF bridge (\cref{sec:hmf}) is part of the released simulation
+layer, not an empirical claim of this paper (\cref{rem:scope}).
 
 \paragraph{Hawkes processes and neural temporal point processes.}
 Self- and mutually-exciting processes~\citep{hawkes1971spectra} underpin much of
@@ -211,10 +210,10 @@ magnitude regression.
 \paragraph{Epidemic models on networks.}
 Degree-based mean-field theory characterises epidemic thresholds on
 heterogeneous graphs~\citep{pastor2001epidemic,boguna2002correlated,pastor2015epidemic}.
-We import the degree-correlated HMF closure into a learned setting, using TGN
-embeddings to supply node-level infectivities that are aggregated into
-macroscopic SEIR-Z-D rates --- to our knowledge the first bridge from
-continuous-time graph memory states to compartmental transition rates.
+Our released simulation layer specifies a degree-correlated HMF closure that
+maps TGN embeddings to macroscopic SEIR-Z-D rates (\cref{sec:hmf}); we describe
+it as system machinery rather than an evaluated contribution, as it is not
+independently validated here (\cref{rem:scope}).
 
 \paragraph{Cross-platform information flow.}
 Empirical work documents inter-platform influence: the ``web
@@ -222,18 +221,20 @@ centipede''~\citep{zannettou2017webcentipede} traces news trajectories across
 communities, coordinated cross-platform disinformation campaigns have been
 analysed in~\citep{wilson2020crossplatform}, platform migrations reshape community
 behaviour~\citep{horta2021migrations}, and false news spreads with distinctive
-dynamics~\citep{vosoughi2018spread}. These studies are measurement-focused;
-SimCity provides the corresponding \emph{predictive} instrument --- a causal,
-per-narrative transfer score evaluated prospectively on live Hacker News +
-GDELT data.
+dynamics~\citep{vosoughi2018spread}. These studies are measurement-focused; we
+add a prospective, prediction-oriented view of the same phenomenon, asking what
+\emph{predicts} transfer on live Hacker News + GDELT data --- and finding
+(\cref{sec:results}) that it is early engagement rather than temporal-excitation
+structure.
 
 \paragraph{Opinion dynamics.}
 Bounded-confidence models~\citep{deffuant2000mixing,hegselmann2002opinion} and
 their statistical-physics treatments~\citep{castellano2009statistical} evolve
-continuous opinions under confidence thresholds. We contribute a
-Filippov-compliant smooth relaxation (\cref{sec:deffuant}) whose radicalization
-state feeds back into representation learning, coupling behavioural and
-structural dynamics.
+continuous opinions under confidence thresholds. Our released simulation layer
+includes a Filippov-compliant smooth relaxation of the Deffuant model
+(\cref{sec:deffuant}); like the other simulation components it is system
+machinery, not an empirically validated contribution of this paper
+(\cref{rem:scope}).
 
 % =============================================================
 \section{Information Propagation: Stochastic SEIR-Z-D Model}
@@ -1067,7 +1068,7 @@ cross-platform Hawkes head carry every result reported here; the SEIR-Z-D
 compartmental layer, the HMF bridge, the smooth Deffuant dynamics, and the
 dynamic influence score are \emph{specified and released as a simulation
 layer but not independently validated} in this paper. We flag this explicitly
-rather than letting the architecture diagram imply otherwise. (i) The multi-task
+rather than letting the breadth of the framework imply otherwise. (i) The multi-task
 objective interacts with the \emph{timing} metric: with uniform Kendall
 weighting the neural model underperforms the static MHP on next-event timing
 (AUC 0.576), recovered by up-weighting the Hawkes task. Importantly, a
