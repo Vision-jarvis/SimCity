@@ -4,18 +4,18 @@ _Generated 2026-07-04. All numbers are reproducible via the commands at the bott
 
 ## Cluster precision — read-and-adjudicated (revision Step 6, corrected corpus)
 
-Manually adjudicated 60 random cross-source cluster pairs (threshold 0.60) by
-reading the paired HN + news titles. Criterion: same specific news event, not
-merely same topic. Labels in `results/cluster_labelling_corrected.csv`
-(LLM-adjudicated, flagged for human verification).
+Hand-labelled 60 random cross-source cluster pairs (threshold 0.60) by reading
+the paired HN + news titles. Criterion: same specific news event, not merely
+same topic. Labels in `results/cluster_labelling_corrected.csv`
+(`same_event_human` column; 97% agreement with the LLM pre-labels).
 
 | cosine band | same-event precision |
 |---|---|
-| all pairs (≥0.60) | **62%** (37/60) |
-| 0.55–0.65 | 67% |
+| all pairs (≥0.60) | **58%** (35/60) |
+| 0.55–0.65 | 58% |
 | **> 0.65** | **80%** |
 
-The cosine proxy (~84%) overstated precision; strict same-event is 62%.
+The cosine proxy (~84%) overstated precision; strict human same-event is 58%.
 Crucially this **strengthens** the engagement result: a spurious merge injects a
 false transfer label uncorrelated with the narrative's engagement, so cluster
 noise *attenuates* — the engagement AUC 0.82 is a **lower bound**. The

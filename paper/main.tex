@@ -1018,8 +1018,8 @@ stories and news articles into single ``narratives'' (only 2--3\% of
 cross-source pairs exceeded a 0.5 title-embedding cosine). The $0.78$ was
 measured over these spurious narratives. With the clusterer corrected (no forced
 assignment; time-windowed clusters) the neural effect disappears while the
-engagement result above holds. We adjudicated a random sample of 60 cross-source
-cluster pairs by reading the paired titles (labels released): 62\% are the same
+engagement result above holds. We hand-labelled a random sample of 60 cross-source
+cluster pairs by reading the paired titles (labels released): 58\% are the same
 news event, rising to 80\% for pairs above 0.65 cosine. This residual cluster
 noise only \emph{attenuates} measured predictability --- a spurious merge
 injects a false transfer label uncorrelated with the narrative's real
@@ -1081,14 +1081,12 @@ detector (\cref{sec:results}(3),(4)). (iii) The timing margin over static MHP,
 while consistent across seeds, is small and not significant. (iv) Results are
 on a two-platform real corpus (HN + news); the third social platform (Reddit/X)
 remains future work pending API access. (v) Real-corpus narratives are formed
-by embedding clustering of titles; a read-and-adjudicate sample of 60
-cross-source pairs gives 62\% same-event precision (80\% above 0.65 cosine),
-with the residual noise attenuating rather than inflating our predictability
-estimates. Our adjudication was performed with LLM assistance and released for
-verification; a fully human-labelled figure would be stronger. This limitation
-is also the source of our cautionary result: an earlier greedy clusterer with a
-forced-assignment defect inflated the real transfer AUC to $0.78$ before we
-caught it by sampling our own clusters.
+by embedding clustering of titles; a hand-labelled sample of 60 cross-source
+pairs gives 58\% same-event precision (80\% above 0.65 cosine), with the
+residual noise attenuating rather than inflating our predictability estimates.
+This limitation is also the source of our cautionary result: an earlier greedy
+clusterer with a forced-assignment defect inflated the real transfer AUC to
+$0.78$ before we caught it by sampling our own clusters.
 
 \subsection{Reproducibility}
 All experiments run on CPU. The repository releases the generator, collectors,
