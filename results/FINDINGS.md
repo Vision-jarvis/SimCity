@@ -2,6 +2,45 @@
 
 _Generated 2026-07-04. All numbers are reproducible via the commands at the bottom._
 
+## ★ DECISIVE CORRECTION — the real-data transfer result was an artifact (0.778 → 0.51 chance)
+
+After fixing the clustering bug (below) and re-deriving the real corpus over
+**14,169 validated narratives** (threshold 0.60, ~84% cross-source precision by
+proxy), the real-data transfer result collapses:
+
+| Real corpus | old (buggy narratives) | **corrected (validated)** |
+|---|---|---|
+| SimCity bridge AUC (3 seeds) | 0.778 ± 0.104 | **0.513 ± 0.018 (chance)** |
+| per-seed | 0.882 / 0.673 / 0.779 | 0.532 / 0.497 / 0.511 |
+| Mann-Whitney p | ≤ 1e-8 | 0.15 / 0.54 / 0.36 (none sig.) |
+| popularity baseline | 0.424 | **0.652** |
+
+**The earlier 0.778 was produced by the forced-assignment clustering bug**,
+which grouped unrelated HN stories and news articles into the same "narrative."
+On genuine narratives, SimCity's narrative-conditioned Hawkes excitation does
+**not** predict real cross-platform transfer — it is at chance — while
+narrative **popularity** predicts it well (0.652).
+
+**This is consistent with the SIR benchmark (Step 2) and it is the paper's real
+empirical finding:** the bridge score detects *temporally-excited* transfer
+(present in synthetic Hawkes data by construction, AUC 0.65) but real HN→news
+transfer does **not** carry a temporal-excitation signature — it is
+popularity-driven. The synthetic success reflected the model recovering its own
+generative assumption; real transfer is not generated that way.
+
+**Not underpowered:** 85 positives among 4,904 narratives; AUC is imbalance-robust,
+the 3-seed spread is tight (±0.018), and the popularity baseline reaching 0.652
+on the *same* data proves the task is learnable — SimCity's score simply does not
+capture the signal.
+
+**Consequence for the paper:** the headline must change. The honest contribution
+is (a) the negative result on engagement magnitude, (b) a method that detects
+temporally-excited transfer with a controlled demonstration, and (c) the
+empirical finding that **real cross-platform transfer is popularity-/topology-
+driven, not temporal-excitation-driven** — a claim of genuine interest,
+supported by SIR + real corpus agreeing. The unqualified "predicts real transfer"
+claim is withdrawn.
+
 ## ⚠ REVIEW RESPONSE — STEP 6 FOUND A BUG THAT INVALIDATES THE REAL-CORPUS NARRATIVES
 
 Reviewer Step 6 asked us to sample narrative clusters and check whether the HN

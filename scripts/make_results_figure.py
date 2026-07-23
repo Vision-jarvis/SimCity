@@ -23,10 +23,10 @@ INK, INK2, GRID = "#0b0b0b", "#52514e", "#e6e5e1"
 # (no test leakage) before scoring. Raw values in
 # results/narrative_transfer_real_oriented.json.
 ROWS = [
-    ("SimCity bridge score",          0.653, (0.580, 0.730), [0.882, 0.673, 0.779]),
-    ("Bridge, count-stratified",      0.660, (0.656, 0.662), [0.894, 0.685, 0.842]),
-    ("Popularity baseline",           0.551, None,           [0.424]),
-    ("Static MHP (by construction)",  0.500, None,           [0.500]),
+    ("SimCity bridge score",         0.653, (0.580, 0.730), [0.532, 0.497, 0.511]),
+    ("Popularity baseline",          0.551, None,           [0.652]),
+    ("SIR benchmark (SimCity)",      None,  None,           [0.529, 0.512, 0.345]),
+    ("Static MHP (by construction)", 0.500, None,           [0.500]),
 ]
 OFF = 0.16  # vertical offset between the two series within a row
 
@@ -36,17 +36,18 @@ ax.set_facecolor("white")
 
 ys = list(range(len(ROWS)))[::-1]  # top row first
 for y, (label, sv, sci, rvals) in zip(ys, ROWS):
-    # synthetic: filled dot + CI whisker
-    if sci is not None:
-        ax.plot(sci, [y + OFF, y + OFF], color=BLUE, lw=2,
-                solid_capstyle="round", alpha=0.45, zorder=2)
-    ax.plot(sv, y + OFF, "o", ms=7, color=BLUE, mec="white", mew=1.2, zorder=3)
-    ax.annotate(f"{sv:.3f}", (sv, y + OFF), textcoords="offset points",
-                xytext=(0, 6), ha="center", fontsize=7.5, color=INK2)
-    # real: one open circle per seed (no whisker -- seed-unstable)
+    # Hawkes controlled benchmark: filled dot + CI whisker (when applicable)
+    if sv is not None:
+        if sci is not None:
+            ax.plot(sci, [y + OFF, y + OFF], color=BLUE, lw=2,
+                    solid_capstyle="round", alpha=0.45, zorder=2)
+        ax.plot(sv, y + OFF, "o", ms=7, color=BLUE, mec="white", mew=1.2, zorder=3)
+        ax.annotate(f"{sv:.3f}", (sv, y + OFF), textcoords="offset points",
+                    xytext=(0, 6), ha="center", fontsize=7.5, color=INK2)
+    # empirical (real corpus / SIR benchmark): one open marker per seed
     for rv in rvals:
         ax.plot(rv, y - OFF, "o", ms=6.5, mfc="white", mec=AQUA, mew=1.8, zorder=3)
-    if len(rvals) == 1 and rvals[0] != 0.5:  # 0.5 already labeled on the row
+    if len(rvals) == 1 and rvals[0] != 0.5:
         ax.annotate(f"{rvals[0]:.3f}", (rvals[0], y - OFF),
                     textcoords="offset points", xytext=(0, -13), ha="center",
                     fontsize=7.5, color=INK2)
@@ -58,7 +59,7 @@ ax.annotate("random (0.5)", (0.5, ys[0] + 0.52), ha="center", fontsize=7.5,
 ax.set_yticks(ys)
 ax.set_yticklabels([r[0] for r in ROWS], fontsize=9, color=INK)
 ax.set_xlabel("Transfer-detection AUC", fontsize=9, color=INK)
-ax.set_xlim(0.38, 0.94)
+ax.set_xlim(0.30, 0.78)
 ax.set_ylim(-0.6, len(ROWS) - 0.25)
 ax.tick_params(axis="x", labelsize=8, colors=INK2)
 ax.tick_params(axis="y", length=0)
@@ -70,9 +71,9 @@ ax.set_axisbelow(True)
 
 handles = [
     plt.Line2D([], [], marker="o", ls="", ms=7, color=BLUE, mec="white",
-               label="Synthetic (3 seeds; 95% CI)"),
+               label="Hawkes benchmark (3-seed mean, 95% CI)"),
     plt.Line2D([], [], marker="o", ls="", ms=6.5, mfc="white", mec=AQUA,
-               mew=1.8, label="Real HN+GDELT (per seed; val-oriented)"),
+               mew=1.8, label="Empirical, per seed (real corpus & SIR)"),
 ]
 ax.legend(handles=handles, loc="lower left", fontsize=8, frameon=False)
 
