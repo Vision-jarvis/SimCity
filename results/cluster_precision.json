@@ -1,0 +1,7 @@
+{
+  "n_pairs": 60,
+  "n_same_event": 37,
+  "precision": 0.6166666666666667,
+  "adjudicator": "LLM (Claude), authors to verify",
+  "criterion": "same specific news event/development, not merely same topic"
+}
