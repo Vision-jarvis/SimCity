@@ -13,7 +13,6 @@ double-check.
 
 import json
 
-import numpy as np
 import pandas as pd
 
 CSV = "results/cluster_labelling_corrected.csv"
